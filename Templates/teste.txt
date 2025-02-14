@@ -1,0 +1,22 @@
+<style>
+    .quotations-container {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .quotation-item {
+        display: inline-block;
+    }
+
+    .quotation-item img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 20px;
+        box-shadow: -5px 5px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .expandable-card {
+        background-color: #f0f0f0;
+    }
+</style>

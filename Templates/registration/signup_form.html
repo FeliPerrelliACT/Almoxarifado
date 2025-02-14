@@ -1,0 +1,77 @@
+{% extends '_layout1.html' %}
+
+{% block content %}
+{% if request.user.type_user != 'admin' %}
+    <p class="text-center text-danger mt-5">Você não tem permissão para acessar esta página.</p>
+{% else %}
+    <div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 80px); max-height: 70vh;">
+        <div class="card custom-card">
+            <div class="card-header custom-header text-center">
+                <h5 class="card-title text-white">Registro de Usuário</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.as_p }}
+                    </div>
+                    <button type="submit" class="btn custom-btn w-100">Enviar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Estilo geral do cartão */
+        .custom-card {
+            width: 100%;
+            max-width: 400px;
+            max-height: 600px; /* Limita a altura do cartão */
+            border-radius: 15px;
+            border: none;
+            background-color: #f1f1f1;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: auto; /* Permite rolagem interna se necessário */
+        }
+
+        /* Cabeçalho do cartão */
+        .custom-header {
+            background-color: #2a6db1; /* Azul */
+            border-radius: 15px 15px 0 0;
+            padding: 20px;
+        }
+
+        /* Botão */
+        .custom-btn {
+            background-color: #f57c00; /* Laranja */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            padding: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .custom-btn:hover {
+            background-color: #ff9800; /* Laranja mais claro para o hover */
+        }
+
+        /* Estilo das entradas do formulário */
+        .mb-3 input,
+        .mb-3 select { /* Adicionando estilização para os selects */
+            border-radius: 8px;
+            padding: 12px;
+            width: 100%;
+            margin-top: 5px;
+            font-size: 16px;
+        }
+
+        /* Foco nas entradas */
+        .mb-3 input:focus,
+        .mb-3 select:focus { /* Estilizando o foco dos selects também */
+            border-color: #f57c00; /* Laranja */
+            box-shadow: 0 0 5px rgba(245, 124, 0, 0.5);
+        }
+    </style>
+{% endif %}
+{% endblock %}

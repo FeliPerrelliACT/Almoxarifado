@@ -1,0 +1,24 @@
+{% extends '_layout1.html' %}
+
+{% block content %}
+    <div class="container" style="max-width: 400px; margin-top: 22.5vh; margin-bottom: 22.5vh;">
+        <div class="card shadow-lg border-light rounded">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title">Excluindo a solicitação número {{ object.id }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="text-center mb-4">
+                        <h6 class="text-danger">Tem certeza que deseja excluir a solicitação abaixo?</h6>
+                        <p class="font-italic">{{ object.request_text }}</p>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-danger btn-lg">Confirmar</button>
+                        <a href="{% url 'solicitante' %}" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
