@@ -5,7 +5,9 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('polls.urls')),
-    path('accounts/', include('Accounts.urls')),
+    path('', include('index.urls')),
+    path('financeiro/', include('financeiro.urls')),
+    path('suprimentos/', include('suprimentos.urls')),
+    path('accounts/', include('accounts.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

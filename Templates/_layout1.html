@@ -110,7 +110,11 @@
             <div class="nav-items">
                 {% if user.is_authenticated %}
                     <a href="{% url 'solicitante' %}" class="nav-link mt-2">Solicitação de compra</a>
-                    {% if user.type_user == "comprador" %}
+                    {% if user.type_user == "financeiro" %}
+                    <a class="mt-2" style="color: white;"> | </a>
+                    <a href="{% url 'financeiro' %}" class="nav-link mt-2">Financeiro</a>
+                    {% endif %}
+                    {% if user.type_user == "suprimentos" %}
                     <a class="mt-2" style="color: white;"> | </a>
                     <a href="{% url 'all_requests' %}" class="nav-link mt-2">Compras</a>
                     <a class="mt-2" style="color: white;"> | </a>

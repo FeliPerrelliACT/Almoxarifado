@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model() 
 
-class accountSignupForm(forms.ModelForm):
+class accountsignupForm(forms.ModelForm):
     password = forms.CharField(
         label= "Senha",
         max_length=50,

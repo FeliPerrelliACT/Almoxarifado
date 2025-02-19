@@ -17,8 +17,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'Accounts.apps.AccountsConfig',
-    'polls',
+    'accounts.apps.accountsConfig',
+    'suprimentos',
+    'financeiro',
+    'index',
 ]
 
 MIDDLEWARE = [
@@ -54,7 +56,7 @@ WSGI_APPLICATION = 'projeto.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "projeto",
+        "NAME": "projeto3",
         "USER": "root",
         "PASSWORD": "1234",
         "HOST": "127.0.0.1",
@@ -107,4 +109,7 @@ MESSAGE_TAGS = {
 
 }
 
-AUTH_USER_MODEL = 'Accounts.CustomUser'
+AUTH_USER_MODEL = 'accounts.CustomUser'
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+

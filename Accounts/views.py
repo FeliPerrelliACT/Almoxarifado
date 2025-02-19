@@ -3,7 +3,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import get_user_model
-from Accounts.forms import accountSignupForm
+from accounts.forms import accountsignupForm
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.urls import reverse_lazy
@@ -15,7 +15,7 @@ User = get_user_model()
 class AccountCreateView(LoginRequiredMixin, CreateView):
     model = User
     template_name = 'registration/signup_form.html'
-    form_class = accountSignupForm
+    form_class = accountsignupForm
     success_url = reverse_lazy('index')
     success_message = 'Usuário registrado com sucesso!!!'
 
