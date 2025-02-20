@@ -1,0 +1,78 @@
+{% extends '_layout1.html' %}
+
+{% block content %}
+    <div class="d-flex justify-content-center align-items-center vh-100" style="max-height: 70vh;">
+        <div class="card custom-card">
+            <div class="card-header custom-header text-center">
+                <h5 class="card-title text-white">Login</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.as_p }}
+                    </div>
+                    <button type="submit" class="btn custom-btn w-100">Entrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Define a imagem de fundo para a página */
+        body {
+            background-size: cover;  /* Ajusta a imagem para cobrir todo o fundo */
+            background-position: center;  /* Centraliza a imagem */
+            background-attachment: fixed; /* Faz com que a imagem não se mova com o conteúdo */
+            height: 100vh; /* Garante que a altura do fundo se ajuste à tela */
+            margin: 0;
+        }
+
+        /* Estilo geral do cartão */
+        .custom-card {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 15px;
+            border: none;
+            background-color: rgba(241, 241, 241, 0.9); /* Fundo semi-transparente para o card */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Cabeçalho do cartão */
+        .custom-header {
+            background-color: #2a6db1; /* Azul */
+            border-radius: 15px 15px 0 0;
+            padding: 20px;
+        }
+
+        /* Botão */
+        .custom-btn {
+            background-color: #f57c00; /* Laranja */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            padding: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .custom-btn:hover {
+            background-color: #ff9800; /* Laranja mais claro para o hover */
+        }
+
+        /* Estilo das entradas do formulário */
+        .mb-3 input {
+            border-radius: 8px;
+            padding: 12px;
+            width: 100%;
+            margin-top: 5px;
+            font-size: 16px;
+        }
+
+        /* Foco nas entradas */
+        .mb-3 input:focus {
+            border-color: #f57c00; /* Laranja */
+            box-shadow: 0 0 5px rgba(245, 124, 0, 0.5);
+        }
+    </style>
+{% endblock %}

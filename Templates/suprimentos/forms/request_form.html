@@ -1,0 +1,79 @@
+{% extends '_layout1.html' %}
+
+{% block content %}
+    <div class="container" style="max-width: 600px; margin-top: 22.5vh; margin-bottom: 22.5vh;">
+        <div class="card shadow-lg border-light rounded">
+            <div class="card-header text-white" style="background-color: #D6891F;">
+                <h5 class="card-title">{{ form_title }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'solicitar' %}">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="request_text">Titulo da Solicitação</label>
+                        <textarea name="request_text" id="request_text" class="form-control" required></textarea>
+                    </div>
+
+                    <div id="product-section">
+                        <div class="product-field mb-3">
+                            <label>Produto:</label>
+                            <select name="product_1" class="form-select product-select" required>
+                                <option value="">Selecione um produto</option>
+                            </select>
+
+                            <label>Quantidade:</label>
+                            <input type="number" name="quantity_1" class="form-control mb-3" required min="1">
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-info mt-2" id="add-product-btn">Adicionar outro produto</button>
+                    <button type="submit" class="btn btn-warning mt-2">Salvar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let productCount = 1;
+
+    function loadProducts(selectElement) {
+        fetch("/get-products/")  // Certifique-se de que essa URL é válida e retorna os produtos como JSON
+            .then(response => response.json())
+            .then(data => {
+                selectElement.innerHTML = '<option value="">Selecione um produto</option>';
+                data.products.forEach(product => {
+                    let option = document.createElement("option");
+                    option.value = product.id;
+                    option.textContent = product.product_name;
+                    selectElement.appendChild(option);
+                });
+            })
+            .catch(error => console.error("Erro ao carregar produtos:", error));
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        loadProducts(document.querySelector(".product-select"));
+    });
+
+    document.getElementById("add-product-btn").addEventListener("click", function () {
+        productCount++;
+        let productSection = document.getElementById("product-section");
+
+        let newProductField = document.createElement("div");
+        newProductField.classList.add("product-field", "mb-3");
+        newProductField.innerHTML = `
+            <label>Produto</label>
+            <select name="product_${productCount}" class="form-select product-select" required>
+                <option value="">Selecione um produto</option>
+            </select>
+
+            <label>Quantidade</label>
+            <input type="number" name="quantity_${productCount}" class="form-control" required min="1">
+        `;
+
+        productSection.appendChild(newProductField);
+        loadProducts(newProductField.querySelector(".product-select"));
+    });
+    </script>
+{% endblock %}
