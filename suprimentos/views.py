@@ -91,11 +91,6 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
         messages.success(self.request, self.success_message)  # Mensagem de sucesso
         return response
 
-    def form_invalid(self, form):
-        # Adiciona uma mensagem de erro caso os dados sejam inválidos
-        messages.error(self.request, "Valor negativo é inválido. Por favor, corrija.")
-        return self.render_to_response(self.get_context_data(form=form))
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Criando um produto'
@@ -103,21 +98,34 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
 
 @login_required
 def all_requests(request):
+    user_groups = request.user.groups.values_list('name', flat=True)
+
     if request.GET.get('titulo') == "Todas as Compras":
         requests = Request.objects.filter(status="esperando cotação")
     else:
         requests = Request.objects.all()  # Retorna todas as requests, sem exceção
 
-    return render(request, 'suprimentos/all_requests.html', {'all_requests': requests, 'titulo': "Todas as Compras"})
+    return render(request, 'suprimentos/all_requests.html', {
+        'all_requests': requests, 
+        'titulo': "Todas as Compras",
+        'user_groups': user_groups,
+        })
 
 @login_required
 def admin_requests(request):
+    user_groups = request.user.groups.values_list('name', flat=True)
+
+    # Filter requests based on the 'titulo' parameter
     if request.GET.get('titulo') == "Todas as Compras":
         requests = Request.objects.filter(status="esperando cotação")
     else:
         requests = Request.objects.all()
 
-    return render(request, 'suprimentos/admin_requests.html', {'all_requests': requests, 'titulo': "Admin"})
+    return render(request, 'suprimentos/admin_requests.html', {
+        'all_requests': requests, 
+        'titulo': "Admin", 
+        'user_groups': user_groups,
+    })
 
 @login_required
 def solicitante(request):
@@ -311,31 +319,30 @@ def handle_request_creation(request):
             "details": str(e)
         }, status=500)
 
-def process_product_request(product_id, quantity, request, total_value):
+def process_product_request(product_id, quantity, request):
     try:
         product = Product.objects.get(id=product_id)
         quantity = int(quantity)
         if quantity <= 0:
-            return total_value, JsonResponse({
+            return JsonResponse({
                 "error": f"Quantidade do produto {product_id} deve ser maior que 0"
             }, status=400)
 
-        total_price = product.price * quantity
         RequestProduct.objects.create(
             request=request,
             product=product,
-            quantity=quantity,
-            total_price=total_price
+            quantity=quantity
         )
-        return total_value + total_price, None
+        return None
     except Product.DoesNotExist:
-        return total_value, JsonResponse({
+        return JsonResponse({
             "error": f"Produto com ID {product_id} não encontrado"
         }, status=400)
     except ValueError:
-        return total_value, JsonResponse({
+        return JsonResponse({
             "error": f"Quantidade inválida para produto {product_id}"
         }, status=400)
+
 
 @login_required
 def request_list_view(request):
@@ -392,7 +399,6 @@ def get_request_products(request, request_id):
         {
             "product_name": rp.product.product_name,
             "quantity": rp.quantity,
-            "total_price": rp.total_price,
         }
         for rp in request_products
     ]

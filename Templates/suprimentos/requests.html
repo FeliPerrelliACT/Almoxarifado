@@ -25,8 +25,6 @@
                     <option value="" class="gray-option" disabled selected hidden>Selecione...</option>
                     <option value="asc">A-Z</option>
                     <option value="desc">Z-A</option>
-                    <option value="value-asc">Menor valor</option>
-                    <option value="value-desc">Maior valor</option>
                 </select>
             </div>
             {% if titulo == "Minhas Solicitações" %}
@@ -54,8 +52,6 @@
                             {% endif %}
                             
                             <small>Status: {{ request.status }}</small>
-                            <br>
-                            <small>Valor total: R${{ request.total_value }}</small>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             {% if request.status == "criada" or request.status == "revisão" %}
@@ -90,7 +86,7 @@
                             productContainer.innerHTML = "<strong>Produtos:</strong><br>";
                             if (data.products.length > 0) {
                                 data.products.forEach(product => {
-                                    productContainer.innerHTML += `<p>${product.product_name} - Quantidade: ${product.quantity} - Total: R$${parseFloat(product.total_price).toFixed(2)}</p>`;
+                                    productContainer.innerHTML += `<p>${product.product_name} - Quantidade: ${product.quantity}</p>`;
                                 });
                             } else {
                                 productContainer.innerHTML = "<p class='text-muted'>Nenhum produto encontrado.</p>";

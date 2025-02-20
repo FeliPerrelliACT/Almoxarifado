@@ -81,7 +81,7 @@ class RequestProductForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['product_name','unidade_medida', 'valor']
+        fields = ['product_name','unidade_medida']
         widgets = {
             'product_name': forms.TextInput(attrs={'placeholder': 'Nome do produto', 'class': 'form-control'}),
             'unidade_medida': forms.Select(choices=UNIT_CHOICES, attrs={'class': 'form-control'}),
@@ -90,7 +90,6 @@ class ProductForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        valor = cleaned_data.get('valor')
         unidade_medida = cleaned_data.get('unidade_medida')
 
         # Garantir que a unidade de medida seja válida

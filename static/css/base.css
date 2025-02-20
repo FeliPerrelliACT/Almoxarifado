@@ -1,0 +1,85 @@
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container-fluid {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;  /* Alinha os itens ao centro verticalmente */
+    padding: 1.5em 3em;  /* Ajusta o espaçamento no header */
+    background-color: #36475F;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.header-logo {
+    max-width: 100px;
+    max-height: 55px;
+    object-fit: contain;
+}
+
+.footer {
+    background-color: #f57c00;
+    color: white;
+    padding: 15px 0;
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.dropdown-menu-right {
+    right: 0;
+    left: auto;
+}
+
+.dropdown-toggle::after {
+    display: none;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.user-avatar i {
+    font-size: 20px;
+    color: #888;
+}
+
+.dropdown-menu {
+    right: 0;
+    left: auto;
+}
+
+.dropdown-item {
+    padding: 10px 20px;
+}
+
+.nav-items {
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-items .nav-link {
+    color: white; /* Assegura que o texto fique branco */
+}

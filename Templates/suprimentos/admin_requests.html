@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block content %}
-{% if request.user.type_user != 'admin' %}
+{% if 'admin' not in user_groups %}
     <p class="text-center text-danger mt-5">Você não tem permissão para acessar esta página.</p>
 {% else %}
     <!-- Container de Visualização das requests -->
@@ -35,8 +35,6 @@
                         <option value="" disabled selected>Selecione...</option>
                         <option value="asc">A-Z</option>
                         <option value="desc">Z-A</option>
-                        <option value="value-asc">Menor valor</option>
-                        <option value="value-desc">Maior valor</option>
                     </select>
                 </div>
             </div>
@@ -56,8 +54,6 @@
                                 <strong>{{ request.request_text }}</strong>
                                 <small class="text-muted d-block">{{ request.pub_date|date:"d/m/Y" }}</small>
                                 <small>Status: {{ request.status }}</small>
-                                <br>
-                                <small>Valor total: R${{ request.total_value }}</small>
                                 <br>
                                 <small>Solicitado por: {{ request.created_by.username }}</small>
                             </div>
@@ -201,7 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         productContainer.innerHTML = "<strong>Produtos:</strong><br>";
                         if (data.products.length) {
                             data.products.forEach(product => {
-                                productContainer.innerHTML += `<p>${product.product_name} - Quantidade: ${product.quantity} - Total: R$${parseFloat(product.total_price).toFixed(2)}</p>`;
+                                productContainer.innerHTML += `<p>${product.product_name} - Quantidade: ${product.quantity}</p>`;
                             });
                         } else {
                             productContainer.innerHTML = "<p class='text-muted'>Nenhum produto encontrado.</p>";

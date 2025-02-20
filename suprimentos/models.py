@@ -12,20 +12,7 @@ def upload_to(instance, filename):
 
 class Product(models.Model):
     product_name = models.CharField(max_length=100)
-    price = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2,
-        null=True,  # Permite valores nulos no campo price
-        validators=[MinValueValidator(0)]  # Impede valores negativos no preço
-    )
     unidade_medida = models.CharField(max_length=50)
-    valor = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        null=True, 
-        blank=True,
-        validators=[MinValueValidator(0)]  # Impede valores negativos no valor
-    )
 
     def __str__(self):
         return self.product_name
@@ -37,12 +24,7 @@ class Request(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.first)  # Ou qualquer lógica para pegar o usuário
     pub_date = models.DateTimeField(default=now)
     status = models.CharField(max_length=50, default="criada")
-    total_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     comment = models.TextField(blank=True, null=True)
-
-    def update_total_value(self):
-        self.total_value = sum(item.total_price for item in self.request_products.all())
-        self.save()
 
     def __str__(self):
         return f"Request {self.id} - {self.status}"
@@ -53,7 +35,6 @@ def upload_to(instance, filename):
 class Quotation(models.Model):
     request = models.ForeignKey(Request, related_name='quotations', on_delete=models.CASCADE)
     file = models.FileField(upload_to=upload_to, null=True, blank=True)  # Arquivo da cotação
-    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Preço da cotação
     supplier = models.CharField(max_length=255, null=True, blank=True)  # Fornecedor da cotação
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -65,15 +46,6 @@ class RequestProduct(models.Model):
     request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='request_products')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-
-    def save(self, *args, **kwargs):
-        if self.product.price is not None:
-            self.total_price = self.quantity * self.product.price
-        else:
-            self.total_price = 0  # Evita erro se o preço for None
-        super().save(*args, **kwargs)
-        self.request.update_total_value()
 
     def __str__(self):
         return f"{self.product.product_name} ({self.quantity} unidades)"
@@ -125,4 +97,3 @@ class PollQuotation(models.Model):
 
     def __str__(self):
         return f'Cotação para {self.request.request_text}'
-
