@@ -1,7 +1,7 @@
 {% extends '_layout1.html' %}
 
 {% block content %}
-{% if request.user.type_user != 'admin' %}
+{% if 'admin' not in user_groups %}
     <p class="text-center text-danger mt-5">Você não tem permissão para acessar esta página.</p>
 {% else %}
     <div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 80px); max-height: 70vh;">

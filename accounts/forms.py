@@ -13,5 +13,5 @@ class accountsignupForm(forms.ModelForm):
     class Meta:
         model = User
         fields = (
-            'username', 'email', 'type_user', 'password',
+            'username', 'email', 'password',
         )
