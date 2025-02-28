@@ -1,8 +1,9 @@
 <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 
 {% extends '_layout1.html' %}
 
@@ -25,8 +26,10 @@
                     <label for="filterStatus">Filtrar status:</label>
                     <select id="filterStatus" class="form-control">
                         <option value="">Selecione...</option>
-                        <option value="esperando cotação">Esperando Cotação</option>
-                        <option value="a avaliar">A avaliar</option>
+                        <option value="Aguardando avaliação">Aguardando avaliação</option>
+                        <option value="Aprovada">Aprovadas</option>
+                        <option value="Desaprovada">Desaprovadas</option>
+                        <option value="Standby">Standby</option>
                     </select>
                 </div>
                 <div>
@@ -43,95 +46,39 @@
         <!-- cards de requests -->
         <div class="list-group mt-4" id="requestsList">
             {% for request in all_requests %}
-                {% if request.status != "criada" and request.status != "revisão" and request.status != "excluida"  and request.status != "esperando cotação" %}
-                    <div class="list-group-item expandable-card" 
-                         data-request-id="{{ request.id }}" 
-                         data-status="{{ request.status }}" 
-                         data-text="{{ request.request_text }}" 
-                         data-total-value="{{ request.total_value }}">
+                {% if request.status != "criada" and request.status != "Revisão Solicitada" and request.status != "excluida"  and request.status != "esperando cotação" %}
+                <div class="list-group-item expandable-card 
+                {% if request.status == 'Standby' %}bg-standby{% elif request.status == 'Desaprovada' %}bg-Desaprovada{% elif request.status == 'Aprovada' %}bg-Aprovada{% endif %}" 
+                data-request-id="{{ request.id }}" 
+                data-status="{{ request.status }}" 
+                data-text="{{ request.request_text }}" 
+                data-total-value="{{ request.total_value }}">        
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>{{ request.request_text }}</strong>
                                 <small class="text-muted d-block">{{ request.pub_date|date:"d/m/Y" }}</small>
-                                <small>Status: {{ request.status }}</small>
+                                <small id="status">Status: <span style="font-weight: bold;">{{ request.status }}<span></small>
                                 <br>
                                 <small>Solicitado por: {{ request.created_by.username }}</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                
-                                <!-- Botões de ação (Aprovar, Desaprovar, Standby) -->
-                                {% if request.status == "a avaliar" or request.status == "Standby" %}
-                                    <button class="btn btn-success approveBtn" data-request-id="{{ request.id }}">Aprovar</button>
-                                    <button class="btn btn-danger disapproveBtn" data-request-id="{{ request.id }}">Desaprovar</button>
+                                {% if request.has_quotation %} 
+                                    <a href="{% url 'get_quotations' request.id %}" class="btn btn-sm btn-secondary text-white" data-toggle="modal" data-target="#quotationsModal">
+                                        Anexos <i class="bi bi-folder"></i>
+                                    </a>                                               
+                                {% endif %} 
+                                <!-- Botões de ação (Aprovar, Standby, Desaprovar) -->
+                                {% if request.status == "Aguardando avaliação" or request.status == "Standby" %}
+                                <a href="{% url 'request_approve' request.id %}" class="btn btn-sm btn-success">Aprovar</a>
+                                <a href="{% url 'request_disapprove' request.id %}" class="btn btn-sm btn-danger">Desaprovar</a>
                                     {% if request.status != "Standby" %}
-                                        <button class="btn btn-primary standbyBtn" data-request-id="{{ request.id }}">Standby</button>
+                                        <a href="{% url 'request_standby' request.id %}" class="btn btn-sm btn-primary">Standby</a>
                                     {% endif %}
                                 {% endif %}
-
-                                <!-- Botão de anexos (visível se o status for diferente de "a avaliar") -->
-                                <div class="d-flex justify-content-end">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#quotationModal{{ request.id }}" 
-                                       class="btn btn-outline-secondary text-dark d-flex align-items-center justify-content-between w-10">
-                                        <p class="mb-0 align-self-start">Anexos</p>
-                                        <i class="bi bi-folder ms-1 mt-1"></i>
-                                    </a>
-                                </div>
                             
                                 <!-- Botão de alternância para exibição de detalhes -->
-                                <button class="btn btn-info toggle-card text-white" data-request-id="{{ request.id }}">Mostrar mais</button>
+                                <button class="btn btn-sm btn-info toggle-card text-white" data-request-id="{{ request.id }}">Mostrar mais</button>
                             </div>                                                   
-                        </div>
-                                             
-                        <!-- Modal para exibir as cotações -->
-                        <div class="modal fade" id="quotationModal{{ request.id }}" tabindex="-1" aria-labelledby="quotationModalLabel{{ request.id }}" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="quotationModalLabel{{ request.id }}">Cotações da Solicitação: {{ request.request_text }}</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="close-modal-{{ request.id }}"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        {% for quotation in request.quotations.all %}
-                                            <div class="quotation-item position-relative" id="quotation-{{ quotation.id }}">
-                                                <a href="{{ quotation.file.url }}" target="_blank">
-                                                    <img src="{{ quotation.file.url }}" alt="Cotação" style="max-width: 100%;"/>
-                                                </a>
-                                                
-                                                <!-- Exibir a lixeira apenas se o status da solicitação for "esperando cotação" -->
-                                                {% if request.status == "esperando cotação" %}
-                                                    <form method="POST" action="{% url 'delete_quotation' quotation.id %}" class="delete-quotation-form position-absolute top-0 end-0 m-2" id="delete-quotation-form-{{ quotation.id }}">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="btn p-0" title="Excluir">
-                                                            <i class="bi bi-trash text-danger"></i>
-                                                        </button>
-                                                    </form>
-                                                {% endif %}
-                                            </div>
-                                        {% empty %}
-                                            <p class="text-muted">Nenhuma cotação encontrada.</p>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Modal de Confirmação de Exclusão -->
-                        <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar Exclusão</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        Você tem certeza que deseja excluir esta cotação?
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">Cancelar</button>
-                                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Excluir</button>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <div class="request-products mt-2" id="products-{{ request.id }}" style="display:none;"></div>
@@ -143,250 +90,139 @@
         </div>
     </div>
 
-    <!-- Modal de upload de arquivos -->
-    <div class="modal" id="uploadModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Enviar Arquivos</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="file" class="form-control" id="modalFileInput" multiple>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success" id="uploadFilesBtn">Enviar</button>
-                </div>
+
+    <!-- Modal para exibir cotações -->
+    <div class="modal fade" id="quotationsModal" tabindex="-1" role="dialog" aria-labelledby="quotationsModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="quotationsModalLabel">Anexos</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+            <ul id="quotationList">
+                <!-- As cotações serão inseridas aqui -->
+            </ul>
             </div>
         </div>
+        </div>
+    </div>
     </div>
 
-    <!-- Modal de adicionar comentário -->
-    <div class="modal" id="commentModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Adicionar Comentário</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <textarea class="form-control" id="modalCommentInput" placeholder="Adicione seu comentário..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="submitButton">Enviar</button>
-                </div>
-            </div>
-        </div>
-    </div>
 {% endif %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let currentRequestId = null;
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    let currentRequestId = null;
+            // Exibir/ocultar produtos com alternância de texto do botão
+            document.querySelectorAll(".toggle-card").forEach(button => {
+                button.addEventListener("click", function () {
+                    let requestId = this.getAttribute("data-request-id");
+                    let productContainer = document.getElementById("products-" + requestId);
 
-    // Exibir/ocultar produtos com alternância de texto do botão
-    document.querySelectorAll(".toggle-card").forEach(button => {
-        button.addEventListener("click", function () {
-            let requestId = this.getAttribute("data-request-id");
-            let productContainer = document.getElementById("products-" + requestId);
-
-            if (productContainer.style.display === "none" || productContainer.style.display === "") {
-                fetch(`/get_request_products/${requestId}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        productContainer.innerHTML = "<strong>Produtos:</strong><br>";
-                        if (data.products.length) {
-                            data.products.forEach(product => {
-                                productContainer.innerHTML += `<p>${product.product_name} - Quantidade: ${product.quantity}</p>`;
+                    if (productContainer.style.display === "none" || productContainer.style.display === "") {
+                        fetch(`/suprimentos/get_request_products/${requestId}/`)
+                            .then(response => response.json())
+                            .then(data => {
+                                productContainer.innerHTML = "<strong>Produtos:</strong><br>";
+                                if (data.products.length) {
+                                    data.products.forEach(product => {
+                                        productContainer.innerHTML += `<p>${product.product_name} - Quantidade: ${product.quantity}</p>`;
+                                    });
+                                } else {
+                                    productContainer.innerHTML = "<p class='text-muted'>Nenhum produto encontrado.</p>";
+                                }
+                                productContainer.style.display = "block";
+                                button.textContent = "Mostrar menos";
                             });
-                        } else {
-                            productContainer.innerHTML = "<p class='text-muted'>Nenhum produto encontrado.</p>";
-                        }
-                        productContainer.style.display = "block";
-                        button.textContent = "Mostrar menos";
-                    });
-            } else {
-                productContainer.style.display = "none";
-                button.textContent = "Mostrar mais";
-            }
-        });
-    });
-
-    // Filtro por status
-    document.getElementById("filterStatus").addEventListener("change", function () {
-        let status = this.value.toLowerCase();
-        document.querySelectorAll(".expandable-card").forEach(card => {
-            card.style.display = !status || card.getAttribute("data-status").toLowerCase() === status ? "block" : "none";
-        });
-    });
-
-    // Ordenação
-    document.getElementById("sortOrder").addEventListener("change", function () {
-        let order = this.value;
-        let container = document.getElementById("requestsList");
-        let cards = Array.from(container.getElementsByClassName("expandable-card"));
-        
-        if (order.includes("value")) {
-            cards.sort((a, b) => {
-                let valueA = parseFloat(a.getAttribute("data-total-value"));
-                let valueB = parseFloat(b.getAttribute("data-total-value"));
-                return order === "value-asc" ? valueA - valueB : valueB - valueA;
-            });
-        } else {
-            cards.sort((a, b) => {
-                let textA = a.getAttribute("data-text").toLowerCase();
-                let textB = b.getAttribute("data-text").toLowerCase();
-                return order === "asc" ? textA.localeCompare(textB) : textB.localeCompare(textA);
-            });
-        }
-
-        cards.forEach(card => container.appendChild(card));
-    });
-
-    // Modal de adicionar comentário
-    document.querySelectorAll(".comment-modal-btn").forEach(button => {
-        button.addEventListener("click", function () {
-            let requestId = this.getAttribute("data-request-id");
-            $('#commentModal').modal('show');
-
-            document.getElementById("submitButton").onclick = function () {
-                let comment = document.getElementById("modalCommentInput").value;
-                fetch(`/request/${requestId}/add_comment/`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    },
-                    body: JSON.stringify({ comment: comment })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message) {
-                        $('#commentModal').modal('hide');
-                        alert("Comentário enviado e status alterado para revisão!");
-                        let requestCard = document.querySelector(`.expandable-card[data-request-id="${requestId}"]`);
-                        requestCard.setAttribute("data-status", "revisão");
-                        requestCard.querySelector(".d-flex small").textContent = "Status: revisão";
-                        location.reload();
                     } else {
-                        alert("Erro ao adicionar comentário ou alterar o status.");
-                    }
-                })
-                .catch(() => alert("Erro ao enviar o comentário. Tente novamente."));
-            };
-        });
-    });
-
-    // Modal de upload de cotação
-    document.querySelectorAll(".upload-modal-btn").forEach(button => {
-        button.addEventListener("click", function () {
-            currentRequestId = this.getAttribute("data-request-id");
-            $('#uploadModal').modal('show');
-        });
-    });
-
-    document.getElementById("uploadFilesBtn").onclick = function () {
-        let files = document.getElementById("modalFileInput").files;
-        if (files.length > 0) {
-            let formData = new FormData();
-            Array.from(files).forEach(file => formData.append('files', file));
-
-            fetch(`/request/${currentRequestId}/add_files/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    $('#uploadModal').modal('hide');
-                    document.getElementById("modalFileInput").value = "";
-                    location.reload();
-                }
-            });
-        }
-    };
-
-    // Exclusão de cotação com confirmação
-    document.querySelectorAll('.delete-quotation-form').forEach(form => {
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();
-            if (confirm("Você tem certeza que deseja excluir esta cotação?")) {
-                let formId = form.id.split('-')[3];
-                let csrfToken = form.querySelector('[name="csrfmiddlewaretoken"]').value;
-
-                fetch(form.action, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': csrfToken }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById(`quotation-${formId}`).remove();
+                        productContainer.style.display = "none";
+                        button.textContent = "Mostrar mais";
                     }
                 });
-            }
-        });
-    });
+            });
 
-    // Atualiza a página quando o modal de cotação for fechado
-    document.querySelectorAll(".btn-close").forEach(button => {
-        button.addEventListener("click", function () {
-            location.reload();
-        });
-    });
+            // Filtro por status
+            document.getElementById("filterStatus").addEventListener("change", function () {
+                let status = this.value.toLowerCase();
+                document.querySelectorAll(".expandable-card").forEach(card => {
+                    card.style.display = !status || card.getAttribute("data-status").toLowerCase() === status ? "block" : "none";
+                });
+            });
 
-    // ---------------------------
-    // Eventos para os botões de ação:
-    // Aprovar, Desaprovar e Standby
-    // ---------------------------
-    document.querySelectorAll(".approveBtn, .disapproveBtn, .standbyBtn").forEach(button => {
-        button.addEventListener("click", function () {
-            let requestId = this.getAttribute("data-request-id");
-            let url = "";
-            if (this.classList.contains("approveBtn")) {
-                url = `/request/approve/${requestId}/`;
-            } else if (this.classList.contains("disapproveBtn")) {
-                url = `/request/disapprove/${requestId}/`;
-            } else if (this.classList.contains("standbyBtn")) {
-                url = `/request/standby/${requestId}/`;
-            }
-            // Realiza a requisição para a URL correspondente
-            fetch(url, {
-                method: "GET"  // Como as views atualizam e retornam JSON, pode ser GET ou POST conforme sua implementação
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    alert(data.message);
-                    location.reload();
+            // Ordenação
+            document.getElementById("sortOrder").addEventListener("change", function () {
+                let order = this.value;
+                let container = document.getElementById("requestsList");
+                let cards = Array.from(container.getElementsByClassName("expandable-card"));
+                
+                if (order.includes("value")) {
+                    cards.sort((a, b) => {
+                        let valueA = parseFloat(a.getAttribute("data-total-value"));
+                        let valueB = parseFloat(b.getAttribute("data-total-value"));
+                        return order === "value-asc" ? valueA - valueB : valueB - valueA;
+                    });
                 } else {
-                    alert("Erro ao atualizar o status.");
+                    cards.sort((a, b) => {
+                        let textA = a.getAttribute("data-text").toLowerCase();
+                        let textB = b.getAttribute("data-text").toLowerCase();
+                        return order === "asc" ? textA.localeCompare(textB) : textB.localeCompare(textA);
+                    });
                 }
-            })
-            .catch(() => alert("Erro de conexão ao tentar atualizar o status."));
-        });
-    });
-});
-</script>
 
-<style>
-    .quotations-container {
-        display: flex;
-        flex-wrap: wrap;
-    }
-    .quotation-item {
-        display: inline-block;
-    }
-    .quotation-item img {
-        width: 100px;
-        height: 100px;
-        object-fit: cover;
-        border-radius: 20px;
-        box-shadow: -5px 5px 10px rgba(0, 0, 0, 0.2);
-    }
-    .expandable-card {
-        background-color: #f0f0f0;
-    }
-</style>
+                cards.forEach(card => container.appendChild(card));
+            });
+
+            // Modal para visualizar quotations
+            $('#quotationsModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);  // O botão que foi clicado
+                var href = button.attr('href');  // Pega o href do botão
+                var requestId = href.split('/').filter(Boolean).pop();  // Extrai o último valor da URL
+            
+                // Log para verificar o valor de requestId
+                console.log("Request ID enviado:", requestId);  // Exibe o valor de request.id
+            
+                // Verifica se o requestId não está vazio ou inválido
+                if (!requestId) {
+                    console.error("Request ID não encontrado ou inválido.");
+                    return;
+                }
+            
+                // Realiza a requisição AJAX para pegar as cotações
+                $.ajax({
+                    url: '/suprimentos/get_quotations/' + requestId + '/',  // URL da view com o request_id
+                    method: 'GET',
+                    success: function(response) {
+                        var quotations = response.quotations;
+                        var list = $('#quotationList');
+                        list.empty();  // Limpa a lista antes de adicionar novas cotações
+            
+                        if (quotations.length > 0) {
+                            quotations.forEach(function(quotation) {
+                                var item;
+                                // Cria a URL completa para o arquivo de mídia
+                                var mediaUrl = '/media/' + quotation.file; // Caminho relativo dentro da pasta 'media'
+
+                                // Verifica se o arquivo é uma imagem
+                                if (quotation.file.match(/\.(jpeg|jpg|gif|png)$/)) {
+                                    item = $('<li>').append('<a href="' + mediaUrl + '" target="_blank"><img src="' + mediaUrl + '" alt="Imagem" class="img-thumbnail" style="max-width: 200px; max-height: 200px;"></a>');
+                                } else {
+                                    // Se não for imagem, apenas exibe o arquivo como link
+                                    item = $('<li>').append('<a href="' + mediaUrl + '" target="_blank">' + quotation.file + '</a>');
+                                }
+                                list.append(item);
+                            });
+                        } else {
+                            list.append('<li>Nenhuma cotação encontrada.</li>');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.log("Erro ao carregar as cotações: " + error);
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %}

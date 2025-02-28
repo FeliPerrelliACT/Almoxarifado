@@ -56,7 +56,7 @@ WSGI_APPLICATION = 'projeto.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "projeto3",
+        "NAME": "s.i.g",
         "USER": "root",
         "PASSWORD": "1234",
         "HOST": "127.0.0.1",
@@ -90,15 +90,19 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'public/static'  # Para coletar arquivos estáticos em produção
+STATIC_ROOT = BASE_DIR / 'public/static'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-DATA_UPLOAD_MAX_MEMORY_SIZE = 419430400  # 400 MB
+# Aumente o limite de upload para 50MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGOUT_REDIRECT_URL = '/accounts/login'
-LOGIN_REDIRECT_URL = '/' 
+LOGIN_URL = '/accounts/login'
+LOGIN_REDIRECT_URL = '/'
+
 
 MESSAGE_TAGS = {
     messages.DEBUG: 'secondary',
@@ -113,3 +117,4 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
+DEBUG = True

@@ -99,18 +99,6 @@ class ProductForm(forms.ModelForm):
 
         return cleaned_data
 
-# Formulário para upload de arquivo
-class UploadFileForm(forms.Form):
-    file = forms.FileField()
-
-    def clean_file(self):
-        file = self.cleaned_data.get('file')
-        # Validação para aceitar apenas arquivos com extensão .jpg ou .png (case insensitive)
-        if not (file.name.lower().endswith('.jpg') or file.name.lower().endswith('.png')):
-            raise forms.ValidationError("Arquivo não permitido!")
-        return file
-
-class QuotationForm(forms.ModelForm):
-    class Meta:
-        model = Quotation
-        fields = ['file', 'supplier']
+# Formulário de Cotação
+class QuotationForm(forms.Form):
+    quotation_file = forms.FileField(label='Selecione o arquivo de cotação', required=True)

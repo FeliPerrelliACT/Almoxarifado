@@ -1,162 +1,87 @@
 {% extends '_base.html' %}
 {% load static %}
 
-{% block head_title %} 
+{% block head_title %}
     ACT
-{% endblock %}
-
-{% block css %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="{% static 'css/base.css' %}">
-
-<style> 
-    body {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-        margin: 0;
-    }
-
-    .container-fluid {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        padding: 0;
-        margin: 0;
-        width: 100%;
-        max-width: 100%;
-    }
-
-    header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;  /* Alinha os itens ao centro verticalmente */
-        padding: 1.5em 3em;  /* Ajusta o espaçamento no header */
-        background-color: #36475F;
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-    }
-
-    .header-logo {
-        max-width: 100px;
-        max-height: 55px;
-        object-fit: contain;
-    }
-
-    .footer {
-        background-color: #f57c00;
-        color: white;
-        padding: 15px 0;
-        text-align: center;
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-    }
-
-    .dropdown-menu-right {
-        right: 0;
-        left: auto;
-    }
-
-    .dropdown-toggle::after {
-        display: none;
-    }
-
-    .user-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background-color: white;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .user-avatar i {
-        font-size: 20px;
-        color: #888;
-    }
-
-    .dropdown-menu {
-        right: 0;
-        left: auto;
-    }
-
-    .dropdown-item {
-        padding: 10px 20px;
-    }
-
-    .nav-items {
-        display: flex;
-        gap: 1rem;
-    }
-
-    .nav-items .nav-link {
-        color: white; /* Assegura que o texto fique branco */
-    }
-
-</style>
 {% endblock %}
 
 {% block header %}
     <div class="container-fluid p-0 m-0">
         <header class="d-flex flex-wrap justify-content-between py-3 mb-4 border-bottom" style="background-color: #36475F; width: 100vw;">
-            <a href="{% url 'index' %}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+            <!-- Ícone de Hambúrguer (Menu) aparece apenas se o usuário estiver logado -->
+            {% if user.is_authenticated %}
+                <button class="border-0 bg-transparent" type="button" data-bs-toggle="offcanvas" data-bs-target="#userMenu" aria-controls="userMenu" style="margin-left: -30px;">
+                    <i class="fas fa-bars fa-2x text-white"></i> <!-- Ícone de Hambúrguer -->
+                </button>
+            {% endif %}
+
+            <!-- Logo da Empresa com distância maior do ícone de hambúrguer -->
+            <a href="{% url 'index' %}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none" style="margin-left: 30px;">
                 <img src="/media/images/logo/LOGO_ACT.png" alt="Logo ACT Engenharia" class="fs-4 text-white header-logo">
             </a>
 
-            <div class="nav-items">
-                {% if user.is_authenticated %}
-                    {% with grupos=user.groups.all|join:"," %}
-                        <a href="{% url 'solicitante' %}" class="nav-link mt-2">Solicitação de compra</a>
-                        
-                        {% if 'financeiro' in grupos %}
-                        <a class="mt-2" style="color: white;"> | </a>
-                        <a href="{% url 'financeiro' %}" class="nav-link mt-2">Financeiro</a>
+            {% if user.is_authenticated %}
+                <!-- Ícone de Usuário no Header -->
+                <div class="dropdown">
+                    <a href="#" class="nav-link px-2 link-light dropdown-toggle" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.imagem %}
+                            <img src="{{ user.imagem.url }}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%;">
+                        {% else %}
+                            <div style="font-size: 24px;">
+                                <i class="fas fa-user"></i>
+                            </div>
                         {% endif %}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="{% url 'account_edit' pk=user.pk %}">Minha conta</a></li>
+                        <li>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">Sair</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            {% endif %}
+        </header>
+    </div>
 
-                        {% if 'suprimentos' in grupos %}
-                        <a class="mt-2" style="color: white;"> | </a>
-                        <a href="{% url 'all_requests' %}" class="nav-link mt-2">Compras</a>
-                        <a class="mt-2" style="color: white;"> | </a>
-                        <a href="{% url 'produto_criar' %}" class="nav-link mt-2">Add Produto</a>
-                        {% endif %}
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="userMenu" aria-labelledby="userMenuLabel" style="background-color: #36475F;">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title text-white" id="userMenuLabel">Menu</h5>
+            <button type="button" class="btn-close text-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body text-center">
+                    <hr class="text-white">
 
-                        {% if 'admin' in grupos %}
-                        <a class="mt-2" style="color: white;"> | </a>
-                        <a href="{% url 'admin_requests' %}" class="nav-link mt-2">Avaliar Solicitações</a>
-                        <a class="mt-2" style="color: white;"> | </a>
-                        <a href="{% url 'signup' %}" class="nav-link mt-2">Cadastrar Usuario</a>
-                        {% endif %}
-                    {% endwith %}
-
-                    <div class="dropdown">
-                        <a href="#" class="nav-link px-2 link-light dropdown-toggle" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            {% if user.imagem %}
-                                <img src="{{ user.imagem.url }}" class="user-avatar" alt="Avatar">
-                            {% else %}
-                                <div class="user-avatar">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                            {% endif %}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="{% url 'account_edit' pk=user.pk %}">Minha conta</a></li>
-                            <li>
-                                <form method="post" action="{% url 'logout' %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="dropdown-item">Sair</button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
+            {% with grupos=user.groups.all|join:"," %}
+                {% if 'financeiro' in grupos %}
+                    <a href="{% url 'financeiro' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Financeiro</a>
+                    <hr class="text-white">
                 {% endif %}
-            </div>
-        </header>    
+
+                    <!-- Links baseados no grupo do usuário (sem sublinhado) -->
+                    <a href="{% url 'solicitante' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Solicitação de compra</a>
+                    <hr class="text-white">
+
+                {% if 'suprimentos' in grupos %}
+                    <a href="{% url 'all_requests' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Compras</a>
+                    <hr class="text-white">
+                    <a href="{% url 'product_list' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Produtos</a>
+                    <hr class="text-white">
+                {% endif %}
+
+                {% if 'admin' in grupos %}
+                    <a href="{% url 'admin_requests' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Avaliar Solicitações</a>
+                    <hr class="text-white">
+                    <a href="{% url 'signup' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Cadastrar Usuário</a>
+                    <hr class="text-white">
+                {% endif %}
+            {% endwith %}
+        </div>
     </div>
 {% endblock %}
+
 
 {% block main %}
     <div class="container-fluid p-0 m-0">
@@ -172,6 +97,170 @@
     <footer class="footer mt-auto">
         <span>© 2025 ACT Engenharia.</span>
     </footer>
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    <style> 
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container-fluid {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;  /* Alinha os itens ao centro verticalmente */
+            padding: 1.5em 3em;  /* Ajusta o espaçamento no header */
+            background-color: #36475F;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .header-logo {
+            max-width: 100px;
+            max-height: 55px;
+            object-fit: contain;
+        }
+
+        .footer {
+            background-color: #f57c00;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .dropdown-menu-right {
+            right: 0;
+            left: auto;
+        }
+
+        .dropdown-toggle::after {
+            display: none;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .user-avatar i {
+            font-size: 20px;
+            color: #888;
+        }
+
+        .dropdown-menu {
+            right: 0;
+            left: auto;
+        }
+
+        .dropdown-item {
+            padding: 10px 20px;
+        }
+
+        .nav-items {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-items .nav-link {
+            color: white; /* Assegura que o texto fique branco */
+        }
+
+    </style>
+
+    <style>
+
+        #requestsList {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem; /* Ajuste o valor conforme necessário */
+        }
+    
+        .expandable-card {
+            background-color: #f0f0f0; /* Cor de fundo padrão */
+            border-radius: 8px; /* Bordas arredondadas */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+            padding: 1rem; /* Espaçamento interno */
+            transition: all 0.3s ease; /* Efeito de transição suave */
+        }
+        
+        .expandable-card:hover {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+    
+        .bg-standby {
+            border-left: 5px solid #0d6efd;
+        }
+    
+        .bg-standby #status span{
+            color: #0d6efd;
+        }
+        
+        .bg-Desaprovada {
+            border-left: 5px solid #dc3545;
+        }
+    
+        .bg-Desaprovada #status span {
+            color: #dc3545;
+        }
+        
+        .bg-Aprovada {
+            border-left: 5px solid #198754;
+        }
+    
+        .bg-Aprovada #status span {
+            color: #198754;
+        }
+
+        .bg-Revisão {
+            border-left:5px solid #ffee00;
+        }
+
+        .bg-Revisão #status span{
+            color: #ffee00;
+        }
+        
+        #quotationList {
+            list-style-type: none;
+            padding-left: 0;
+            display: flex; /* Flexbox para alinhar as imagens lado a lado */
+            flex-wrap: wrap; /* Permite que as imagens se movam para a linha seguinte, se necessário */
+            gap: 15px; /* Espaçamento entre as imagens */
+        }
+        
+        #quotationList li {
+            flex: 1 0 200px; /* Faz com que cada item ocupe 200px, mas pode se ajustar conforme necessário */
+            max-width: 200px; /* Tamanho máximo da imagem */
+            width: 100%; /* Cada imagem ocupará 100% do seu contêiner */
+        }
+        
+    
+    </style>
 {% endblock %}
 
 {% block javascript %}

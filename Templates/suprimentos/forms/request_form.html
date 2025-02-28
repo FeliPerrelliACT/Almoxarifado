@@ -38,15 +38,18 @@
     let productCount = 1;
 
     function loadProducts(selectElement) {
-        fetch("/get-products/")  // Certifique-se de que essa URL é válida e retorna os produtos como JSON
+        fetch("/suprimentos/get-products/")
             .then(response => response.json())
             .then(data => {
                 selectElement.innerHTML = '<option value="">Selecione um produto</option>';
+                // Filtra os produtos para incluir apenas os ativos
                 data.products.forEach(product => {
-                    let option = document.createElement("option");
-                    option.value = product.id;
-                    option.textContent = product.product_name;
-                    selectElement.appendChild(option);
+                    if (product.status === true) { // Verifica se o status do produto é "ativo"
+                        let option = document.createElement("option");
+                        option.value = product.id;
+                        option.textContent = product.product_name;
+                        selectElement.appendChild(option);
+                    }
                 });
             })
             .catch(error => console.error("Erro ao carregar produtos:", error));
@@ -63,12 +66,12 @@
         let newProductField = document.createElement("div");
         newProductField.classList.add("product-field", "mb-3");
         newProductField.innerHTML = `
-            <label>Produto</label>
+            <label>Produto:</label>
             <select name="product_${productCount}" class="form-select product-select" required>
                 <option value="">Selecione um produto</option>
             </select>
 
-            <label>Quantidade</label>
+            <label>Quantidade:</label>
             <input type="number" name="quantity_${productCount}" class="form-control" required min="1">
         `;
 
