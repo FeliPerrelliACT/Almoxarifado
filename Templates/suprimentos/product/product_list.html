@@ -1,92 +1,106 @@
 {% extends '_layout1.html' %}
 
 {% block head_title %}
-Lista de Produtos
+    Lista de Produtos
 {% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Lista de Produtos</h2>
-        <a href="{% url 'produto_criar' %}" class="btn btn-primary" style="font-size: 16px; text-decoration: none;">Adicionar Produto</a>
-    </div>
-    
-    <!-- Filtro e Ordenação -->
-    <div class="d-flex justify-content-between mb-4">
-        <form method="GET" class="d-flex">
-            <div class="me-3">
-                <select name="filter_by" class="form-select" aria-label="Filtrar por" onchange="this.form.submit()">
-                    <option value="">Filtrar Unidade De Medida</option>
-                    {% for unidade in unidades %}
-                        <option value="{{ unidade }}" {% if request.GET.filter_by == unidade %}selected{% endif %}>{{ unidade }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="me-3">
-                <select name="status_filter" class="form-select" aria-label="Filtrar por Status" onchange="this.form.submit()">
-                    <option value="">Filtrar por Status</option>
-                    <option value="ativo" {% if request.GET.status_filter == 'ativo' %}selected{% endif %}>Ativo</option>
-                    <option value="inativo" {% if request.GET.status_filter == 'inativo' %}selected{% endif %}>Inativo</option>
-                </select>
-            </div>
-            <div class="me-3">
-                <button type="submit" class="btn btn-info" style="display: none;">Filtrar</button>
-            </div>
-        </form>
+    {% with grupos=user.groups.all|join:"," %}
+        {% if 'suprimentos' in grupos %}
 
-        <form method="GET" class="d-flex">
-            <div class="me-3">
-                <select name="order_by" class="form-select" aria-label="Ordenar por" onchange="this.form.submit()">
-                    <option value="">Ordenar por</option>
-                    <option value="product_name" {% if request.GET.order_by == 'product_name' %}selected{% endif %}>Nome do Produto</option>
-                    <option value="unidade_medida" {% if request.GET.order_by == 'unidade_medida' %}selected{% endif %}>Unidade de Medida</option>
-                </select>
-            </div>
-            <div class="me-3">
-                <select name="order_direction" class="form-select" aria-label="Direção de Ordenação" onchange="this.form.submit()">
-                    <option value="asc" {% if request.GET.order_direction == 'asc' %}selected{% endif %}>Ascendente</option>
-                    <option value="desc" {% if request.GET.order_direction == 'desc' %}selected{% endif %}>Descendente</option>
-                </select>
-            </div>
-        </form>
-    </div>
-    
-    <!-- Tabela de Produtos -->
-    <table class="table table-bordered table-striped table-hover">
-        <thead class="thead-dark">
-            <tr>
-                <th>Nome do Produto</th>
-                <th>Unidade de Medida</th>
-                <th>Status</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in products %}
-            <tr>
-                <td>{{ product.product_name }}</td>
-                <td>{{ product.unidade_medida }}</td>
-                <td>
-                    {% if product.status %}
-                        <span class="badge bg-success">Ativo</span>
-                    {% else %}
-                        <span class="badge bg-danger">Inativo</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{% url 'edit_product' product.id %}" class="btn btn-warning btn-sm">Editar</a>
-                    <a href="{% url 'toggle_product_status' product.id %}" class="btn btn-secondary btn-sm">
-                        {% if product.status %}
-                            Desativar
-                        {% else %}
-                            Ativar
-                        {% endif %}
-                    </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+            <div class="container mt-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Lista de Produtos</h2>
+                    <a href="{% url 'produto_criar' %}" class="btn btn-primary" style="font-size: 16px; text-decoration: none;">Adicionar Produto</a>
+                </div>
+                
+                <!-- Filtro e Ordenação -->
+                <div class="d-flex justify-content-between mb-4">
+                    <form method="GET" class="d-flex">
+                        <div class="me-3">
+                            <select name="filter_by" class="form-select" aria-label="Filtrar por Unidade de Medida" onchange="this.form.submit()">
+                                <option value="">Filtrar Unidade De Medida</option>
+                                {% for unidade in unidades %}
+                                    <option value="{{ unidade }}" {% if request.GET.filter_by == unidade %}selected{% endif %}>{{ unidade }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="me-3">
+                            <select name="status_filter" class="form-select" aria-label="Filtrar por Status" onchange="this.form.submit()">
+                                <option value="">Filtrar por Status</option>
+                                <option value="ativo" {% if request.GET.status_filter == 'ativo' %}selected{% endif %}>Ativo</option>
+                                <option value="inativo" {% if request.GET.status_filter == 'inativo' %}selected{% endif %}>Inativo</option>
+                            </select>
+                        </div>
+                    </form>
 
+                    <form method="GET" class="d-flex">
+                        <div class="me-3">
+                            <select name="order_by" class="form-select" aria-label="Ordenar por" onchange="this.form.submit()">
+                                <option value="">Ordenar por</option>
+                                <option value="product_name" {% if request.GET.order_by == 'product_name' %}selected{% endif %}>Nome do Produto</option>
+                                <option value="unidade_medida" {% if request.GET.order_by == 'unidade_medida' %}selected{% endif %}>Unidade de Medida</option>
+                                <option value="tipo" {% if request.GET.order_by == 'tipo' %}selected{% endif %}>Tipo</option>
+                            </select>
+                        </div>
+                        <div class="me-3">
+                            <select name="order_direction" class="form-select" aria-label="Direção de Ordenação" onchange="this.form.submit()">
+                                <option value="asc" {% if request.GET.order_direction == 'asc' %}selected{% endif %}>Ascendente</option>
+                                <option value="desc" {% if request.GET.order_direction == 'desc' %}selected{% endif %}>Descendente</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Tabela de Produtos -->
+                <table class="table table-bordered table-striped table-hover">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Nome do Produto</th>
+                            <th>Unidade de Medida</th>
+                            <th>Tipo</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.product_name }}</td>
+                            <td>{{ product.unidade_medida }}</td>
+                            <td>{% if product.tipo == 'unico' %}Uso único{% else %}Reutilizável{% endif %}</td>
+                            <td>
+                                {% if product.status %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'edit_product' product.id %}" class="btn btn-warning btn-sm">Editar</a>
+                                <a href="{% url 'toggle_product_status' product.id %}" class="btn btn-secondary btn-sm">
+                                    {% if product.status %}
+                                        Desativar
+                                    {% else %}
+                                        Ativar
+                                    {% endif %}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        {% else %}
+
+            <div class="container mt-5">
+                <div class="alert alert-danger" role="alert">
+                    Você não tem permissão para acessar esta página.
+                </div>
+            </div>
+            
+        {% endif %}
+    {% endwith %}
 {% endblock %}
+

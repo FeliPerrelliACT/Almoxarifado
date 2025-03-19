@@ -9,9 +9,12 @@ UNIT_CHOICES = [
     ('ha', 'Hectare (ha)'), ('acre', 'Acre'), ('mi2', 'Milha quadrada (mi²)'), ('L', 'Litro (L)'),
     ('mL', 'Mililitro (mL)'), ('m3', 'Metro cúbico (m³)'), ('cm3', 'Centímetro cúbico (cm³)'),
     ('galao', 'Galão'), ('fl_oz', 'Onça fluida (fl oz)'), ('barril', 'Barril'),
-    ('UND', 'Unidade'), ('DEZ', 'Dezena'), ('CEN', 'Centena'), ('MIL', 'Milhar'),
-    ('DEZ_MIL', 'Dezena de milhar'), ('CEN_MIL', 'Centena de milhar'), ('MILHAO', 'Milhão'),
-    ('DEZ_MILHAO', 'Dezena de milhão'), ('MILHAO_MIL', 'Milhão de milhar'), ('BILHAO', 'Bilhão')
+    ('un', 'Unidade'), ('dez', 'Dezena'), ('cen', 'Centena'), ('mil', 'Milhar'),
+]
+
+TIPO_CHOICES = [
+    ('unico', 'Uso Único'),
+    ('reutilizavel', 'Reutilizável'),
 ]
 
 # Formulário de Solicitação
@@ -37,9 +40,22 @@ class RequestForm(forms.ModelForm):
                 label=f'Quantidade {i}'
             )
 
+        # Adicionar o campo de cost_center
+        self.fields['cost_center'] = forms.CharField(
+            max_length=255,
+            required=True,
+            label='Centro de Custo'
+        )
+
     def save(self, commit=True):
         # Criação da solicitação
         instance = super().save(commit=False)
+        
+        # Atribuir o valor do cost_center
+        cost_center = self.cleaned_data.get('cost_center')
+        if cost_center:
+            instance.cost_center = cost_center
+
         if commit:
             instance.save()
 
@@ -60,7 +76,7 @@ class RequestForm(forms.ModelForm):
 
     class Meta:
         model = Request
-        fields = ['request_text', 'status']  # Inclui apenas os campos do modelo Request
+        fields = ['request_text', 'status', 'cost_center']  # Adicionar cost_center ao meta
 
 # Formulário para Produto na Solicitação
 class RequestProductForm(forms.ModelForm):
@@ -77,25 +93,29 @@ class RequestProductForm(forms.ModelForm):
             raise forms.ValidationError("A quantidade deve ser maior que zero.")
         return quantity
 
-# Formulário de Produto
+# Formulário de Cadadastro Produtos
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['product_name','unidade_medida']
+        fields = ['product_name', 'unidade_medida', 'tipo']
         widgets = {
             'product_name': forms.TextInput(attrs={'placeholder': 'Nome do produto', 'class': 'form-control'}),
             'unidade_medida': forms.Select(choices=UNIT_CHOICES, attrs={'class': 'form-control'}),
-
+            'tipo': forms.Select(choices=TIPO_CHOICES, attrs={'class': 'form-control'}),
         }
 
     def clean(self):
         cleaned_data = super().clean()
         unidade_medida = cleaned_data.get('unidade_medida')
+        tipo = cleaned_data.get('tipo')
 
         # Garantir que a unidade de medida seja válida
         if unidade_medida not in dict(UNIT_CHOICES):
             self.add_error('unidade_medida', "Unidade de medida inválida.")
 
+        # Garantir que o tipo seja válido
+        if tipo not in dict(TIPO_CHOICES):
+            self.add_error('tipo', "Tipo de produto inválido.")
 
         return cleaned_data
 

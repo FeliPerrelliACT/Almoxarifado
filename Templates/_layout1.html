@@ -56,7 +56,7 @@
 
             {% with grupos=user.groups.all|join:"," %}
                 {% if 'financeiro' in grupos %}
-                    <a href="{% url 'financeiro' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Financeiro</a>
+                    <a href="{% url 'lista_planos' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Planos Financeiros</a>
                     <hr class="text-white">
                 {% endif %}
 
@@ -65,23 +65,27 @@
                     <hr class="text-white">
 
                 {% if 'suprimentos' in grupos %}
-                    <a href="{% url 'all_requests' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Compras</a>
+                    <a href="{% url 'all_requests' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Suprimentos</a>
                     <hr class="text-white">
                     <a href="{% url 'product_list' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Produtos</a>
                     <hr class="text-white">
                 {% endif %}
-
                 {% if 'admin' in grupos %}
                     <a href="{% url 'admin_requests' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Avaliar Solicitações</a>
                     <hr class="text-white">
+                    <a href="{% url 'lista_centros_custo' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Centro de Custo</a>
+                    <hr class="text-white">
                     <a href="{% url 'signup' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Cadastrar Usuário</a>
+                    <hr class="text-white">
+                {% endif %}
+                {% if 'estoque' in grupos or 'suprimentos' in grupos %}
+                    <a href="{% url 'lista_estoque' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Estoque</a>
                     <hr class="text-white">
                 {% endif %}
             {% endwith %}
         </div>
     </div>
 {% endblock %}
-
 
 {% block main %}
     <div class="container-fluid p-0 m-0">
@@ -245,6 +249,7 @@
             color: #ffee00;
         }
         
+
         #quotationList {
             list-style-type: none;
             padding-left: 0;

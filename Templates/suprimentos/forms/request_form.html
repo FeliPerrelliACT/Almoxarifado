@@ -15,6 +15,28 @@
                         <textarea name="request_text" id="request_text" class="form-control" required></textarea>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="company">Selecione a Empresa:</label>
+                        <select id="company" name="company" class="form-select" required>
+                            <option value="">Selecione uma empresa</option>
+                            <option value="act_engenharia">ACT Engenharia</option>
+                            <option value="green_circle">Green Circle</option>
+                            <option value="techparv">TechPave</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="cost_center">Centro de Custo:</label>
+                        <select id="cost_center" name="cost_center" class="form-select" required>
+                            <option value="">Selecione um centro de custo</option>
+                            {% for centro in centros %}
+                                {% if centro.status == 1 %}
+                                    <option value="{{ centro.id }}">{{ centro.name }}</option>
+                                {% endif %}
+                            {% endfor %}    
+                        </select>
+                    </div>
+
                     <div id="product-section">
                         <div class="product-field mb-3">
                             <label>Produto:</label>
@@ -29,54 +51,72 @@
 
                     <button type="button" class="btn btn-info mt-2" id="add-product-btn">Adicionar outro produto</button>
                     <button type="submit" class="btn btn-warning mt-2">Salvar</button>
+
                 </form>
             </div>
         </div>
     </div>
 
     <script>
-    let productCount = 1;
+        let productCount = 1;
 
-    function loadProducts(selectElement) {
-        fetch("/suprimentos/get-products/")
-            .then(response => response.json())
-            .then(data => {
-                selectElement.innerHTML = '<option value="">Selecione um produto</option>';
-                // Filtra os produtos para incluir apenas os ativos
-                data.products.forEach(product => {
-                    if (product.status === true) { // Verifica se o status do produto é "ativo"
+        function loadProducts(selectElement) {
+            fetch("/suprimentos/get-products/")
+                .then(response => response.json())
+                .then(data => {
+                    selectElement.innerHTML = '<option value="">Selecione um produto</option>';
+                    // Filtra os produtos para incluir apenas os ativos
+                    data.products.forEach(product => {
+                        if (product.status === true) { // Verifica se o status do produto é "ativo"
+                            let option = document.createElement("option");
+                            option.value = product.id;
+                            option.textContent = product.product_name;
+                            selectElement.appendChild(option);
+                        }
+                    });
+                })
+                .catch(error => console.error("Erro ao carregar produtos:", error));
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            loadProducts(document.querySelector(".product-select"));
+        });
+
+        document.getElementById("add-product-btn").addEventListener("click", function () {
+            productCount++;
+            let productSection = document.getElementById("product-section");
+
+            let newProductField = document.createElement("div");
+            newProductField.classList.add("product-field", "mb-3");
+            newProductField.innerHTML = `
+                <label>Produto:</label>
+                <select name="product_${productCount}" class="form-select product-select" required>
+                    <option value="">Selecione um produto</option>
+                </select>
+
+                <label>Quantidade:</label>
+                <input type="number" name="quantity_${productCount}" class="form-control" required min="1">
+            `;
+
+            productSection.appendChild(newProductField);
+            loadProducts(newProductField.querySelector(".product-select"));
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("/comercial/get_centros/")
+                .then(response => response.json())
+                .then(data => {
+                    let select = document.getElementById("centro_de_custo");
+                    data.centros.forEach(centro => {
                         let option = document.createElement("option");
-                        option.value = product.id;
-                        option.textContent = product.product_name;
-                        selectElement.appendChild(option);
-                    }
-                });
-            })
-            .catch(error => console.error("Erro ao carregar produtos:", error));
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-        loadProducts(document.querySelector(".product-select"));
-    });
-
-    document.getElementById("add-product-btn").addEventListener("click", function () {
-        productCount++;
-        let productSection = document.getElementById("product-section");
-
-        let newProductField = document.createElement("div");
-        newProductField.classList.add("product-field", "mb-3");
-        newProductField.innerHTML = `
-            <label>Produto:</label>
-            <select name="product_${productCount}" class="form-select product-select" required>
-                <option value="">Selecione um produto</option>
-            </select>
-
-            <label>Quantidade:</label>
-            <input type="number" name="quantity_${productCount}" class="form-control" required min="1">
-        `;
-
-        productSection.appendChild(newProductField);
-        loadProducts(newProductField.querySelector(".product-select"));
-    });
+                        option.value = centro.id;  
+                        option.textContent = centro.nome;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("Erro ao buscar centros de custo:", error));
+        });
+        
     </script>
+        
 {% endblock %}

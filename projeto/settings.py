@@ -20,6 +20,8 @@ INSTALLED_APPS = [
     'accounts.apps.accountsConfig',
     'suprimentos',
     'financeiro',
+    'comercial',
+    'estoque',
     'index',
 ]
 
@@ -56,7 +58,7 @@ WSGI_APPLICATION = 'projeto.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "s.i.g",
+        "NAME": "sig",
         "USER": "root",
         "PASSWORD": "1234",
         "HOST": "127.0.0.1",
@@ -94,8 +96,8 @@ STATIC_ROOT = BASE_DIR / 'public/static'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# Aumente o limite de upload para 50MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

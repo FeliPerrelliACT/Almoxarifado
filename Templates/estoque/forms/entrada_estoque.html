@@ -1,0 +1,185 @@
+{% extends '_layout1.html' %}
+
+{% block content %}
+  <div class="container">
+    <!-- Faixa superior com cor e texto -->
+    <div class="title-header">
+      <h2 class="header-title">Entrada de Estoque</h2>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="form-container">
+      {% csrf_token %}
+      <label for="local">Local:</label>
+      <input type="text" name="local" required>
+
+      <div id="produto-container">
+        <div class="produto-item">
+          <label for="produto" class="mb-2">Produto:</label>
+          <select name="produto" required id="produto-select">
+            <option value="" disabled selected>Selecione...</option>
+            {% for produto in form.fields.produto.queryset %}
+              <option value="{{ produto.id }}">{{ produto.product_name }}</option>
+            {% endfor %}
+          </select>
+          
+
+          <label for="quantidade" class="mb-2">Quantidade:</label>
+          <input type="number" name="quantidade" min="1" required>
+
+          <button type="button" class="remove-produto mb-2">Remover</button>
+        </div>
+      </div>
+
+      <div class="buttons-container">
+        <button type="button" id="add-produto" class="form-button">+ Adicionar Produto</button>
+      </div>
+
+      <div class="final-buttons-container">
+        <button type="button" id="cancelar" class="form-button cancelar-button" onclick="window.location.href='{% url 'lista_estoque' %}'">Cancelar</button>
+        <button type="submit" class="form-button submit-button">Registrar Entrada</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("add-produto").addEventListener("click", function () {
+            let container = document.getElementById("produto-container");
+            let novoProduto = container.firstElementChild.cloneNode(true);
+            novoProduto.querySelector("input[name='quantidade']").value = "";
+            container.appendChild(novoProduto);
+        });
+
+        document.getElementById("produto-container").addEventListener("click", function (event) {
+            if (event.target.classList.contains("remove-produto")) {
+                let produtoItens = document.querySelectorAll(".produto-item");
+                if (produtoItens.length > 1) {
+                    event.target.parentElement.remove();
+                }
+            }
+        });
+    });
+  </script>
+
+  <style>
+    /* Faixa superior para o título */
+    .title-header {
+      background-color: #36475F; /* Cor de fundo da faixa */
+      width: 100%; /* Garante que a faixa ocupe toda a largura */
+      padding: 10px 0; /* Espaçamento vertical */
+      position: absolute; /* Fixar a faixa no topo do container */
+      top: 0;
+      left: 0;
+      text-align: center;
+      border-radius: 5px 5px 0 0; /* Arredondar apenas os cantos superiores */
+    }
+
+    .header-title {
+      color: white;
+      font-weight: bold;
+      font-size: 24px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: white;
+      padding: 50px 20px 20px; /* Padding para garantir que o conteúdo não fique sobre a faixa */
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      position: relative; /* Permite que o título fixado fique no topo do container */
+    }
+
+    /* Adicionando espaço entre o título e os campos do formulário */
+    .form-container {
+      margin-top: 20px; /* Espaço entre o título e os campos do formulário */
+    }
+
+    .form-container input, .form-container select {
+      width: calc(100% - 20px);
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      display: block;
+    }
+
+    .produto-item {
+      display: flex;
+      align-items: center; /* Alinha verticalmente no centro */
+      gap: 10px;
+      margin-bottom: 10px;
+      justify-content: space-between; /* Ajusta o espaço entre os itens */
+    }
+
+    .produto-item label {
+      flex: 1; /* Ocupa o espaço disponível */
+      text-align: left;
+    }
+
+    /* Ajustando o botão Remover para alinhamento centralizado */
+    .remove-produto {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      align-self: center; /* Alinha verticalmente no centro */
+    }
+
+    .submit-button {
+      background: #f89c1c;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .submit-button:hover {
+      background: #e08916;
+    }
+
+    .cancelar-button {
+      background: #ccc;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .cancelar-button:hover {
+      background: #999;
+    }
+
+    .buttons-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .form-button {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .final-buttons-container {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+    }
+
+    .final-buttons-container .form-button {
+      width: 48%;
+    }
+    
+  </style>
+{% endblock %}

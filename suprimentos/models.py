@@ -7,21 +7,35 @@ from django.db import models
 from django import forms
 import os
 
+# Modelo de Produtos
 class Product(models.Model):
+    USO_UNICO = 'unico'
+    REUTILIZAVEL = 'reutilizavel'
+    
+    TIPO_CHOICES = [
+        (USO_UNICO, 'Uso Único'),
+        (REUTILIZAVEL, 'Reutilizável'),
+    ]
+
     product_name = models.CharField(max_length=100)
     unidade_medida = models.CharField(max_length=50)
     status = models.BooleanField(default=True)
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO_CHOICES,
+        default=USO_UNICO
+    )
 
     def __str__(self):
-        return self.product_name
+        return self.product_name  # Apenas o nome do produto
 
 # Modelo de Solicitação (Request)
 class Request(models.Model):
     id = models.AutoField(primary_key=True)
     request_text = models.TextField()
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.first)  # Ou qualquer lógica para pegar o usuário
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.first)
     pub_date = models.DateTimeField(default=now)
-    status = models.CharField(max_length=50, default="criada")
+    status = models.CharField(max_length=50, default="Criada")
     comment = models.TextField(blank=True, null=True)
     
     company = models.CharField(max_length=255, blank=True, null=True)

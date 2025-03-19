@@ -4,18 +4,14 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Exists, OuterRef, Prefetch
-from django.core.files.storage import FileSystemStorage
-from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
-from django.core.exceptions import ValidationError
 from .forms import RequestForm, ProductForm
+from comercial.models import CentroCusto
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.utils import timezone
-from .models import PollRequest
 from django.db.models import Q
-import json
 
 class RequestCreateView(LoginRequiredMixin, CreateView):
     model = Request
@@ -24,7 +20,7 @@ class RequestCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
-        form.instance.status = 'criada'
+        form.instance.status = 'Criada'
         response = super().form_valid(form)
 
         num_products = int(self.request.POST.get('num_products', 0))
@@ -149,7 +145,6 @@ def admin_requests(request):
         'user_groups': user_groups,
     })
 
-
 @login_required
 def solicitante(request):
     # Filtra as solicitações feitas pelo usuário logado
@@ -167,19 +162,34 @@ def solicitante(request):
 @login_required
 def request_create(request):
     if request.method == "GET":
-        context = {"form_title": 'Solicitação de Compra'}
+        # Buscar centros de custo para preencher o select no formulário
+        centros = CentroCusto.objects.all()
+        context = {
+            "form_title": 'Solicitação de Compra',
+            "centros": centros  # Enviando os centros para o template
+        }
         return render(request, "suprimentos/forms/request_form.html", context)
 
     if request.method == "POST":
         # Captura do texto da solicitação
         request_text = request.POST.get('request_text')
+        centro_id = request.POST.get('cost_center')  # ID do centro de custo selecionado
+        company = request.POST.get('company')  # Captura o valor do campo 'company'
 
-        # Criação de uma nova solicitação
+        # Verifica se o centro de custo existe
+        try:
+            centro_custo = CentroCusto.objects.get(id=centro_id)
+        except CentroCusto.DoesNotExist:
+            return JsonResponse({"error": "Centro de custo inválido"}, status=400)
+
+        # Criação da nova solicitação
         new_request = Request.objects.create(
             request_text=request_text,
             created_by=request.user,
-            pub_date=timezone.now(),  # Data de criação da solicitação
-            status='criada'
+            pub_date=timezone.now(),
+            status='Criada',
+            cost_center=centro_custo,  # Salva o centro de custo
+            company=company  # Salva o valor do campo 'company'
         )
 
         # Inserção dos produtos associados à solicitação
@@ -190,18 +200,15 @@ def request_create(request):
             if product_id and quantity:
                 try:
                     product = Product.objects.get(id=product_id)
-
                     RequestProduct.objects.create(
                         request=new_request,
                         product=product,
                         quantity=quantity
                     )
                 except Product.DoesNotExist:
-                    # Caso o produto não exista, você pode adicionar um tratamento de erro ou log
-                    continue
+                    continue  # Caso o produto não exista, simplesmente ignora
 
-        # Redirecionar para a página de solicitação ou para outra página de sucesso
-        return redirect('solicitante')  # Redireciona para a página de solicitação, ou outro destino
+        return redirect('solicitante')  # Redireciona para a página de solicitações
 
     return JsonResponse({"error": "Método inválido"}, status=405)
 
@@ -349,7 +356,7 @@ def handle_request_creation(request):
             request_text=request_text,
             created_by=user,
             pub_date=timezone.now(),
-            status="criada"
+            status="Criada"
         )
 
         for key in product_fields:
