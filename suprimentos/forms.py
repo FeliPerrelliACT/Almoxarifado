@@ -1,4 +1,4 @@
-from .models import Request, Product, RequestProduct, Quotation
+from .models import Request, Product, RequestProduct, CentroCusto, PlanoFinanceiro, Armazem, Funcionario
 from django import forms
 
 UNIT_CHOICES = [
@@ -122,3 +122,75 @@ class ProductForm(forms.ModelForm):
 # Formulário de Cotação
 class QuotationForm(forms.Form):
     quotation_file = forms.FileField(label='Selecione o arquivo de cotação', required=True)
+
+# Formulário de Centro Custo
+class CentroCustoForm(forms.ModelForm):
+    class Meta:
+        model = CentroCusto
+        fields = ['name']  # Apenas o nome será preenchido
+        widgets = {
+            'status': forms.HiddenInput(),  # Oculta o campo de status no formulário
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.status = True  # O status será sempre 'Ativo'
+        instance.usuario_registrante = self.initial.get('usuario_registrante')  # Usa o usuário logado
+        if commit:
+            instance.save()
+        return instance
+
+# Formulário de Plano Financeiro
+class PlanoFinanceiroForm(forms.ModelForm):
+    class Meta:
+        model = PlanoFinanceiro
+        fields = ['name']  # Apenas o nome será preenchido
+        widgets = {
+            'status': forms.HiddenInput(),  # Oculta o campo de status no formulário
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.status = True  # O status será sempre 'Ativo'
+        instance.usuario_registrante = self.initial.get('usuario_registrante')  # Usa o usuário logado
+        if commit:
+            instance.save()
+        return instance
+
+# Formulário de Centro Custo
+class ArmazemForm(forms.ModelForm):
+    class Meta:
+        model = Armazem
+        fields = ['name']  # Apenas o nome será preenchido
+        widgets = {
+            'status': forms.HiddenInput(),  # Oculta o campo de status no formulário
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.status = True  # O status será sempre 'Ativo'
+        instance.usuario_registrante = self.initial.get('usuario_registrante')  # Usa o usuário logado
+        if commit:
+            instance.save()
+        return instance
+
+# Formulário de Funcionário
+class FuncionarioForm(forms.ModelForm):
+    EMPRESA_CHOICES = [
+        ('ACT ENGENHARIA', 'ACT ENGENHARIA'),
+        ('GREEN CIRCLE', 'GREEN CIRCLE'),
+        ('TECH PAV', 'TECH PAV'),
+    ]
+
+    empresa = forms.ChoiceField(choices=EMPRESA_CHOICES, label="Empresa")
+
+    class Meta:
+        model = Funcionario
+        fields = ['name', 'cpf', 'id_funcionario', 'cargo', 'empresa']  # Removido o campo 'status'
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.status = True  # Define o status como ativo
+        if commit:
+            instance.save()
+        return instance

@@ -7,8 +7,6 @@ urlpatterns = [
     path('lista/', views.lista_estoque, name='lista_estoque'),
     path('exportar/excel/', views.exportar_estoque_excel, name='exportar_estoque_excel'),
     path('exportar/pdf/', views.exportar_estoque_pdf, name='exportar_estoque_pdf'),
-    path('get_produtos/<str:local>/', views.get_produtos_por_local, name='get_produtos_por_local'),
-
+    path('transferencia/', views.transferencia_view, name='transferencia_estoque'),
+    path('get_produtos_por_local/<str:local>/', views.get_produtos_por_local, name='get_produtos_por_local'),
 ]
-
-

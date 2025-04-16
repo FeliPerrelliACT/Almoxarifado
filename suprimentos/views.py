@@ -1,17 +1,18 @@
-from .models import Request, Product, RequestProduct, RequestFile, Quotation
+from .models import Request, Product, RequestProduct, RequestFile, Quotation, CentroCusto, PlanoFinanceiro, Armazem, Funcionario
+from .forms import RequestForm, ProductForm, CentroCustoForm, PlanoFinanceiroForm, ArmazemForm, FuncionarioForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
-from django.contrib.auth.decorators import login_required
+from django.db.models import Exists, OuterRef, Prefetch, Q
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Exists, OuterRef, Prefetch
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from .forms import RequestForm, ProductForm
-from comercial.models import CentroCusto
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Q
+
+def index(request):
+    return redirect('lista_estoque')
 
 class RequestCreateView(LoginRequiredMixin, CreateView):
     model = Request
@@ -233,6 +234,7 @@ def update_request_status(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+@login_required
 def request_publish(request, request_id):
     # Recupera a solicitação com o id fornecido
     request_obj = get_object_or_404(Request, id=request_id)
@@ -247,6 +249,7 @@ def request_publish(request, request_id):
     # Redireciona para a página com todas as solicitações
     return redirect('solicitante')
 
+@login_required
 def request_delete(request, request_id):
     # Recupera a solicitação com o id fornecido
     request_obj = get_object_or_404(Request, id=request_id)
@@ -261,6 +264,7 @@ def request_delete(request, request_id):
     # Redireciona para a página com todas as solicitações
     return redirect('solicitante')
 
+@login_required
 def request_approve(request, request_id):
     # Obtém o objeto de solicitação com base no ID
     request_obj = get_object_or_404(Request, id=request_id)
@@ -272,6 +276,7 @@ def request_approve(request, request_id):
     # Redireciona para a página
     return redirect('admin_requests')
 
+@login_required
 def request_disapprove(request, request_id):
     # Obtém o objeto de solicitação com base no ID
     request_obj = get_object_or_404(Request, id=request_id)
@@ -283,6 +288,7 @@ def request_disapprove(request, request_id):
     # Redireciona para a página
     return redirect('admin_requests')
 
+@login_required
 def request_standby(request, request_id):
     # Obtém o objeto de solicitação com base no ID
     request_obj = get_object_or_404(Request, id=request_id)
@@ -294,6 +300,7 @@ def request_standby(request, request_id):
     # Redireciona para a página 
     return redirect('admin_requests')
 
+@login_required
 def request_to_evaluate(request, request_id):
     # Recupera a solicitação com o ID fornecido
     request_obj = get_object_or_404(Request, id=request_id)
@@ -308,12 +315,14 @@ def request_to_evaluate(request, request_id):
     # Redireciona para a página das solicitações
     return redirect('all_requests')
 
+@login_required
 def request_list(request):
     all_requests = Request.objects.exclude(status="excluida")
     print("🔍 QuerySet:", all_requests)
     print("🔍 Total de registros:", all_requests.count())
     return render(request, 'sua_template.html', {'all_requests': all_requests})
 
+@login_required
 def request_revision(request, request_id):
     if request.method == 'POST':
         # Obtém a instância do objeto Request com o ID fornecido
@@ -341,6 +350,7 @@ def request_revision(request, request_id):
     else:
         return JsonResponse({'status': 'error', 'message': 'Método não permitido.'}, status=405)
 
+@login_required
 def handle_request_creation(request):
     request_text = request.POST.get("request_text")
     if not request_text:
@@ -618,5 +628,282 @@ def process_product_request(product_id, quantity, request):
             "error": f"Quantidade inválida para produto {product_id}"
         }, status=400)
 
+# Centros de Custo
+
+@login_required
+def cadastrar_centro_custo(request):
+    if request.method == "POST":
+        form = CentroCustoForm(request.POST)
+        if form.is_valid():
+            centro_custo = form.save(commit=False)
+            centro_custo.usuario_registrante = request.user  # Atribui o usuário logado
+            centro_custo.save()
+            return redirect('listar_centros_custo')  # Redireciona após salvar
+    else:
+        form = CentroCustoForm()
+    return render(request, 'suprimentos/centrocusto/centrocusto_form.html', {'form': form})
+
+@login_required
+def listar_centros_custo(request):
+    centros = CentroCusto.objects.all()
+
+    # Filtro por status
+    status_filter = request.GET.get('status_filter')
+    if status_filter == 'ativo':
+        centros = centros.filter(status=True)
+    elif status_filter == 'inativo':
+        centros = centros.filter(status=False)
+
+    # Ordenação
+    order_by = request.GET.get('order_by')
+    order_direction = request.GET.get('order_direction', 'asc')
+
+    if order_by:
+        if order_direction == 'asc':
+            centros = centros.order_by(order_by)
+        else:
+            centros = centros.order_by('-' + order_by)
+
+    context = {
+        'centros': centros,
+        'status_filter': status_filter,
+        'order_by': order_by,
+        'order_direction': order_direction,
+    }
+    return render(request, 'suprimentos/centrocusto/centrocusto_list.html', context)
+
+@login_required
+def editar_centro_custo(request, centro_id):
+    centro = get_object_or_404(CentroCusto, id=centro_id)
+    
+    if request.method == "POST":
+        # Salva apenas o nome do centro de custo
+        centro.name = request.POST.get('name')
+        centro.save()
+        return redirect('listar_centros_custo')  # Redireciona após a edição
+    
+    context = {
+        'form_title': 'Editar Centro de Custo',
+        'centro': centro,
+    }
+    return render(request, 'suprimentos/centrocusto/editar_centrocusto_form.html', context)
+
+@login_required
+def toggle_centro_custo_status(request, centro_id):
+    centro_custo = CentroCusto.objects.get(id=centro_id)
+    centro_custo.status = not centro_custo.status
+    centro_custo.save()
+    return redirect('listar_centros_custo')
+
+# Plano Financeiro
+
+@login_required
+def cadastrar_plano_financeiro(request):
+    if request.method == "POST":
+        form = PlanoFinanceiroForm(request.POST)
+        if form.is_valid():
+            plano_financeiro = form.save(commit=False)
+            plano_financeiro.usuario_registrante = request.user  # Atribui o usuário logado
+            plano_financeiro.save()
+            return redirect('listar_planos_financeiros')  # Redireciona após salvar
+    else:
+        form = PlanoFinanceiroForm()
+    return render(request, 'suprimentos/planofinanceiro/planofinanceiro_form.html', {'form': form})
+
+@login_required
+def listar_planos_financeiros(request):
+    planos = PlanoFinanceiro.objects.all()
+
+    # Filtro por status
+    status_filter = request.GET.get('status_filter')
+    if status_filter == 'ativo':
+        planos = planos.filter(status=True)
+    elif status_filter == 'inativo':
+        planos = planos.filter(status=False)
+
+    # Ordenação
+    order_by = request.GET.get('order_by')
+    order_direction = request.GET.get('order_direction', 'asc')
+
+    if order_by:
+        if order_direction == 'asc':
+            planos = planos.order_by(order_by)
+        else:
+            planos = planos.order_by('-' + order_by)
+
+    context = {
+        'planos': planos,
+        'status_filter': status_filter,
+        'order_by': order_by,
+        'order_direction': order_direction,
+    }
+    return render(request, 'suprimentos/planofinanceiro/planofinanceiro_list.html', context)
+
+@login_required
+def editar_plano_financeiro(request, plano_id):
+    plano = get_object_or_404(PlanoFinanceiro, id=plano_id)
+    
+    if request.method == "POST":
+        # Salva apenas o nome do plano financeiro
+        plano.name = request.POST.get('name')
+        plano.save()
+        return redirect('listar_planos_financeiros')  # Redireciona após a edição
+    
+    context = {
+        'form_title': 'Editar Plano Financeiro',
+        'plano': plano,
+    }
+    return render(request, 'suprimentos/planofinanceiro/editar_planofinanceiro_form.html', context)
+
+@login_required
+def toggle_plano_financeiro_status(request, plano_id):
+    plano_financeiro = PlanoFinanceiro.objects.get(id=plano_id)
+    plano_financeiro.status = not plano_financeiro.status
+    plano_financeiro.save()
+    return redirect('listar_planos_financeiros')
+
+# Armazens
+
+@login_required
+def cadastrar_armazem(request):
+    if request.method == "POST":
+        form = ArmazemForm(request.POST)
+        if form.is_valid():
+            armazem = form.save(commit=False)
+            armazem.usuario_registrante = request.user  # Atribui o usuário logado
+            armazem.save()
+            return redirect('listar_armazens')  # Redireciona após salvar
+    else:
+        form = ArmazemForm()
+    return render(request, 'suprimentos/armazem/armazem_form.html', {'form': form})
+
+@login_required
+def listar_armazens(request):
+    armazens = Armazem.objects.all()
+
+    # Filtro por status
+    status_filter = request.GET.get('status_filter')
+    if status_filter == 'ativo':
+        armazens = armazens.filter(status=True)
+    elif status_filter == 'inativo':
+        armazens = armazens.filter(status=False)
+
+    # Ordenação
+    order_by = request.GET.get('order_by')
+    order_direction = request.GET.get('order_direction', 'asc')
+
+    if order_by:
+        if order_direction == 'asc':
+            armazens = armazens.order_by(order_by)
+        else:
+            armazens = armazens.order_by('-' + order_by)
+
+    context = {
+        'armazens': armazens,
+        'status_filter': status_filter,
+        'order_by': order_by,
+        'order_direction': order_direction,
+    }
+    return render(request, 'suprimentos/armazem/armazem_list.html', context)
+
+@login_required
+def editar_armazem(request, armazem_id):
+    armazem = get_object_or_404(Armazem, id=armazem_id)
+    
+    if request.method == "POST":
+        # Salva apenas o nome do armazém
+        armazem.name = request.POST.get('name')
+        armazem.save()
+        return redirect('listar_armazens')  # Redireciona após a edição
+    
+    context = {
+        'form_title': 'Editar Armazém',
+        'armazem': armazem,
+    }
+    return render(request, 'suprimentos/armazem/editar_armazem_form.html', context)
+
+@login_required
+def toggle_armazem_status(request, armazem_id):
+    armazem = Armazem.objects.get(id=armazem_id)
+    armazem.status = not armazem.status
+    armazem.save()
+    return redirect('listar_armazens')
+
+# Funcionarios
+
+@login_required
+def listar_funcionarios(request):
+    funcionarios = Funcionario.objects.all()
+
+    # Filtro por status
+    status_filter = request.GET.get('status_filter')
+    if status_filter == 'ativo':
+        funcionarios = funcionarios.filter(status=True)
+    elif status_filter == 'inativo':
+        funcionarios = funcionarios.filter(status=False)
+
+    # Ordenação
+    order_by = request.GET.get('order_by')
+    order_direction = request.GET.get('order_direction', 'asc')
+
+    if order_by:
+        if order_direction == 'asc':
+            funcionarios = funcionarios.order_by(order_by)
+        else:
+            funcionarios = funcionarios.order_by('-' + order_by)
+
+    context = {
+        'funcionarios': funcionarios,
+        'status_filter': status_filter,
+        'order_by': order_by,
+        'order_direction': order_direction,
+    }
+    return render(request, 'suprimentos/funcionario/funcionario_list.html', context)
+
+@login_required
+def cadastrar_funcionario(request):
+    if request.method == 'POST':
+        form = FuncionarioForm(request.POST)
+        if form.is_valid():
+            funcionario = form.save(commit=False)
+            funcionario.usuario_registrante = request.user  # Define o usuário logado como registrante
+            funcionario.save()
+            messages.success(request, 'Funcionário cadastrado com sucesso!')
+            return redirect('listar_funcionarios')  # Redireciona para a lista de funcionários
+        else:
+            messages.error(request, 'Erro ao cadastrar funcionário. Verifique os dados.')
+    else:
+        form = FuncionarioForm()
+    return render(request, 'suprimentos/funcionario/cadastrar_funcionario.html', {'form': form})
+
+@login_required
+def editar_funcionario(request, funcionario_id):
+    funcionario = get_object_or_404(Funcionario, id=funcionario_id)
+    
+    if request.method == "POST":
+        form = FuncionarioForm(request.POST, instance=funcionario)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Funcionário atualizado com sucesso!')
+            return redirect('listar_funcionarios')  # Redireciona para a lista de funcionários
+        else:
+            messages.error(request, 'Erro ao atualizar funcionário. Verifique os dados.')
+    else:
+        form = FuncionarioForm(instance=funcionario)
+    
+    context = {
+        'form': form,
+        'funcionario': funcionario,
+        'form_title': 'Editar Funcionário',
+    }
+    return render(request, 'suprimentos/funcionario/editar_funcionario.html', context)
+
+@login_required
+def toggle_funcionario_status(request, funcionario_id):
+    funcionario = get_object_or_404(Funcionario, id=funcionario_id)
+    funcionario.status = not funcionario.status  # Alterna o status
+    funcionario.save()
+    messages.success(request, f'Status do funcionário "{funcionario.name}" atualizado com sucesso!')
+    return redirect('listar_funcionarios')  # Redireciona para a lista de funcionários
 
 

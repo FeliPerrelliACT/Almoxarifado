@@ -1,13 +1,16 @@
+from .models import Estoque, EntradaEstoque, SaidaEstoque, TransferenciaEstoque
+from suprimentos.models import Product, Armazem, Funcionario
 from django.contrib.auth.decorators import login_required
-from .models import EntradaEstoque, Estoque, SaidaEstoque
 from .forms import EntradaEstoqueForm, SaidaEstoqueForm
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.pagesizes import A4
-from suprimentos.models import Product
+from django.utils.timezone import now
+from django.db.models import Q, Sum
 from reportlab.pdfgen import canvas
-from django.db.models import Q
+from django.contrib import messages
+from django.db import transaction
 from datetime import datetime
 from io import BytesIO
 import pandas as pd
@@ -45,45 +48,110 @@ def entrada_estoque(request):
     else:
         form = EntradaEstoqueForm()
 
-    return render(request, 'estoque/forms/entrada_estoque.html', {'form': form})
+    # Buscar apenas os nomes dos armazéns
+    locais_entrada = Armazem.objects.values_list('name', flat=True)
+
+    return render(request, 'estoque/forms/entrada_estoque.html', {
+        'form': form,
+        'locais_entrada': locais_entrada  # Passa os locais de entrada para o template
+    })
 
 @login_required
 def saida_estoque(request):
-    locais_estoque = Estoque.objects.values('local').distinct()
-
     if request.method == 'POST':
-        local = request.POST.get('local')
-        produtos = []
+        try:
+            local = request.POST.get('local')
+            responsavel_id = request.POST.get('responsavel')
+            usuario = request.user
 
-        # Coletar todos os produtos e quantidades do formulário
-        for key, value in request.POST.items():
-            if key.startswith('produto-'):
-                produto_id = value
-                quantidade = int(request.POST.get(f'quantidade-{key.split("-")[1]}'))
-                produtos.append((produto_id, quantidade))
+            # Captura todos os produtos e quantidades dinamicamente
+            produtos = []
+            quantidades = []
+            for key, value in request.POST.items():
+                if key.startswith('produto-'):
+                    produtos.append(value)
+                if key.startswith('quantidade-'):
+                    quantidades.append(value)
 
-        for produto_id, quantidade in produtos:
-            estoque = Estoque.objects.filter(product_id=produto_id, local=local).first()
-            if estoque and estoque.quantidade >= quantidade:
-                produto = Product.objects.get(id=produto_id)
+            # Verifica se os campos obrigatórios estão preenchidos
+            if not local:
+                messages.error(request, "O campo 'Local' é obrigatório.")
+                return redirect('saida_estoque')
+            if not produtos or not quantidades:
+                messages.error(request, "Os campos 'Produto' e 'Quantidade' são obrigatórios.")
+                return redirect('saida_estoque')
 
-                # Registrar a saída
-                SaidaEstoque.objects.create(
-                    product=produto,
-                    local=local,
-                    quantidade=quantidade,
-                    usuario_registrante=request.user
-                )
+            with transaction.atomic():
+                for i in range(len(produtos)):
+                    produto_id = produtos[i]
+                    try:
+                        quantidade = int(quantidades[i])
+                        if quantidade <= 0:
+                            raise ValueError("A quantidade deve ser maior que zero.")
+                    except ValueError as ve:
+                        messages.error(request, f"Quantidade inválida para o produto {produto_id}: {ve}")
+                        return redirect('saida_estoque')
 
-                # Atualizar a quantidade no estoque
-                estoque.quantidade -= quantidade
-                estoque.save()
+                    try:
+                        produto = Product.objects.get(id=produto_id)
+                    except Product.DoesNotExist:
+                        messages.error(request, f"Produto com ID {produto_id} não encontrado.")
+                        return redirect('saida_estoque')
 
-        return redirect('lista_estoque')
+                    try:
+                        estoque = Estoque.objects.get(product=produto, local=local)
+                    except Estoque.DoesNotExist:
+                        messages.error(request, f"Estoque para o produto {produto.product_name} no local {local} não encontrado.")
+                        return redirect('saida_estoque')
+
+                    if estoque.quantidade < quantidade:
+                        messages.error(request, f"Estoque insuficiente para {produto.product_name}.")
+                        return redirect('saida_estoque')
+
+                    # Atualiza o estoque
+                    estoque.quantidade -= quantidade
+                    estoque.save()
+
+                    # Registra a saída no log
+                    SaidaEstoque.objects.create(
+                        product=produto,
+                        local=local,
+                        quantidade=quantidade,
+                        usuario_registrante=usuario,
+                        responsavel_id=responsavel_id
+                    )
+
+            messages.success(request, "Saída registrada com sucesso.")
+            return redirect('lista_estoque')
+
+        except Exception as e:
+            messages.error(request, f"Ocorreu um erro inesperado: {e}")
+            return redirect('saida_estoque')
+
+    # Obter os locais de saída disponíveis
+    locais_estoque = Estoque.objects.values_list('local', flat=True).distinct()
+    funcionarios = Funcionario.objects.filter(status=True)
 
     return render(request, 'estoque/forms/saida_estoque.html', {
-        'locais_estoque': locais_estoque
+        'locais_estoque': locais_estoque,
+        'funcionarios': funcionarios,
     })
+
+@login_required
+def get_produtos_por_local(request, local):
+    produtos = Estoque.objects.filter(local=local, quantidade__gt=0)
+    produtos_info = []
+
+    for estoque in produtos:
+        produtos_info.append({
+            'id': estoque.product_id,
+            'quantidade': estoque.quantidade,
+            'product': {
+                'product_name': estoque.product.product_name
+            }
+        })
+
+    return JsonResponse({'produtos': produtos_info})
 
 @login_required
 def lista_estoque(request):
@@ -284,15 +352,109 @@ def exportar_estoque_pdf(request):
     response.write(buffer.getvalue())
     return response
 
-def get_produtos_por_local(request, local):
-    produtos = Estoque.objects.filter(local=local)
-    produtos_info = []
+@login_required
+def transferencia_produto(usuario, produto_id, local_saida, local_entrada, quantidade):
+    # Verificar se o produto existe
+    try:
+        produto = Product.objects.get(id=produto_id)
+    except Product.DoesNotExist:
+        raise Exception("Produto não encontrado.")
+    
+    # Verificar se o produto existe no local de saída
+    try:
+        estoque_saida = Estoque.objects.get(produto=produto, local=local_saida)
+    except Estoque.DoesNotExist:
+        raise Exception(f"Produto não encontrado no local de saída: {local_saida}.")
+    
+    # Verificar se o produto existe no local de entrada
+    try:
+        estoque_entrada = Estoque.objects.get(produto=produto, local=local_entrada)
+    except Estoque.DoesNotExist:
+        raise Exception(f"Produto não encontrado no local de entrada: {local_entrada}.")
+    
+    # Verificar se a quantidade no local de saída é suficiente
+    if estoque_saida.quantidade < quantidade:
+        raise Exception(f"Quantidade insuficiente no local de saída: {local_saida}.")
+    
+    # Iniciar uma transação para garantir que tudo seja feito de forma atômica
+    with transaction.atomic():
+        # Subtrair a quantidade do local de saída
+        estoque_saida.quantidade -= quantidade
+        estoque_saida.save()
+        
+        # Adicionar a quantidade ao local de entrada
+        estoque_entrada.quantidade += quantidade
+        estoque_entrada.save()
+        
+        # Criar um log de transferência
+        log_transferencia = TransferenciaEstoque(
+            produto=produto,
+            local_saida=local_saida,
+            local_entrada=local_entrada,
+            quantidade=quantidade,
+            usuario=usuario,
+            data_transferencia=now()
+        )
+        log_transferencia.save()
+    
+    return f"Transferência de {quantidade} unidades de {produto.nome} realizada com sucesso!"
 
-    for estoque in produtos:
-        produtos_info.append({
-            'id': estoque.product.id,
-            'product_name': estoque.product.product_name,
-            'quantidade': estoque.quantidade
-        })
+@login_required
+def transferencia_view(request):
+    if request.method == 'POST':
+        local_saida = request.POST.get('local_saida')
+        local_entrada = request.POST.get('local_entrada')
+        responsavel_id = request.POST.get('responsavel')
+        observacao = request.POST.get('observacao')  # Captura o campo de observação
+        usuario = request.user
+        produtos = request.POST.getlist('produto[]')
+        quantidades = request.POST.getlist('quantidade[]')
 
-    return JsonResponse({'produtos': produtos_info})
+        try:
+            with transaction.atomic():
+                for i in range(len(produtos)):
+                    produto_id = produtos[i]
+                    quantidade = int(quantidades[i])
+                    produto = Product.objects.get(id=produto_id)
+                    estoque_saida = Estoque.objects.get(product=produto, local=local_saida)
+
+                    if estoque_saida.quantidade < quantidade:
+                        messages.error(request, f"Estoque insuficiente para {produto.product_name}.")
+                        return redirect('transferencia_estoque')
+
+                    estoque_saida.quantidade -= quantidade
+                    estoque_saida.save()
+
+                    estoque_entrada, created = Estoque.objects.get_or_create(
+                        product=produto,
+                        local=local_entrada,
+                        defaults={'quantidade': 0}
+                    )
+                    estoque_entrada.quantidade += quantidade
+                    estoque_entrada.save()
+
+                    TransferenciaEstoque.objects.create(
+                        produto=produto,
+                        local_saida=local_saida,
+                        local_entrada=local_entrada,
+                        quantidade=quantidade,
+                        usuario=usuario,
+                        responsavel_id=responsavel_id,
+                        observacao=observacao  # Salva a observação
+                    )
+
+            messages.success(request, "Transferência realizada com sucesso.")
+            return redirect('lista_estoque')
+        except Exception as e:
+            messages.error(request, f"Ocorreu um erro: {e}")
+            return redirect('transferencia_estoque')
+
+    return render(request, 'estoque/forms/transferencia_estoque.html', {
+        'locais_saida': Estoque.objects.values_list('local', flat=True).distinct(),
+        'locais_entrada': Armazem.objects.values_list('name', flat=True),
+        'funcionarios': Funcionario.objects.filter(status=True),
+    })
+
+
+
+

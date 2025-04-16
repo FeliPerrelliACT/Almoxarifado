@@ -1,0 +1,297 @@
+{% extends '_layout1.html' %}
+
+{% block head_title %}
+  Transferência de Estoque
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="title-header">
+      <h2 class="header-title">Transferência de Estoque</h2>
+    </div>
+
+    <form method="POST" class="form-container">
+      {% csrf_token %}
+
+      <!-- Local de Saída -->
+      <label class="mt-4">Local de Saída:</label>
+      <select name="local_saida" id="local_saida" class="form-control" required>
+        <option value="">Selecione...</option>
+        {% for local in locais_saida %}
+          <option value="{{ local }}">{{ local }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Local de Entrada -->
+      <label for="local_entrada">Local de Entrada:</label>
+      <select name="local_entrada" id="local_entrada" class="form-control" required>
+        <option value="">Selecione...</option>
+        {% for local in locais_entrada %}
+          <option value="{{ local }}">{{ local }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Funcionário Responsável -->
+      <div class="form-group">
+        <label for="responsavel" id="responsavel-label">Funcionário Responsável:</label>
+        <select name="responsavel" id="responsavel" class="form-control" required>
+          <option value="">Selecione...</option>
+          {% for funcionario in funcionarios %}
+            <option value="{{ funcionario.id }}">{{ funcionario.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Observação -->
+      <div class="form-group">
+        <label for="observacao">Observação:</label>
+        <textarea 
+          name="observacao" 
+          id="observacao" 
+          class="form-control" 
+          rows="3" 
+          placeholder="Adicione observações, se necessário."></textarea>
+      </div>
+
+      <!-- Produtos e Quantidades -->
+      <div id="produtos-container">
+        <div class="produto-item">
+          <label class="mb-2">Produto:</label>
+          <select name="produto[]" required>
+            <option value="">Selecione...</option>
+          </select>
+
+          <label class="mb-2">Quantidade:</label>
+          <input type="number" name="quantidade[]" min="1" required placeholder="Máx: 0">
+
+          <button type="button" class="remove-produto btn btn-danger mb-2" onclick="removerProduto(this)">Remover</button>
+        </div>
+      </div>
+
+      <!-- Botão para adicionar mais produtos -->
+      <button type="button" id="add-produto" class="form-button">+ Adicionar Produto</button>
+
+      <!-- Botões de ação -->
+      <div class="buttons-container">
+        <button type="button" class="cancel-button" onclick="window.location.href='/'">Cancelar</button>
+        <button type="submit" class="form-button submit-button">Transferir Produtos</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Função para atualizar os selects de produtos com base no local selecionado
+      function updateProductSelects(local) {
+        fetch(`/estoque/get_produtos_por_local/${local}`)
+          .then(response => response.json())
+          .then(data => {
+            console.log('Produtos recebidos:', data.produtos); // Depuração
+            document.querySelectorAll("select[name='produto[]']").forEach(select => {
+              const selectedValue = select.value; // Preserva o valor selecionado
+              select.innerHTML = '<option value="">Selecione...</option>';
+              data.produtos.forEach(produto => {
+                let option = document.createElement("option");
+                option.value = produto.id;
+                option.textContent = produto.product.product_name; // Apenas o nome do produto
+                option.dataset.quantidadeMax = produto.quantidade; // Armazena a quantidade máxima no atributo data
+                select.appendChild(option);
+              });
+  
+              // Restaura o valor selecionado, se ainda for válido
+              if (selectedValue) {
+                select.value = selectedValue;
+              }
+  
+              // Atualiza o campo de quantidade ao selecionar um produto
+              select.addEventListener('change', function () {
+                const selectedOption = select.options[select.selectedIndex];
+                const maxQuantidade = selectedOption.dataset.quantidadeMax || 1;
+  
+                // Limita o campo de quantidade ao valor máximo
+                const quantidadeInput = select.parentElement.querySelector("input[name='quantidade[]']");
+                quantidadeInput.value = ""; // Limpa o valor atual
+                quantidadeInput.setAttribute("max", maxQuantidade);
+                quantidadeInput.setAttribute("placeholder", `Máx: ${maxQuantidade}`);
+              });
+            });
+          })
+          .catch(error => console.error('Erro ao buscar produtos:', error));
+      }
+  
+      // Atualiza os selects de produtos quando o local de saída for alterado
+      const localSelect = document.querySelector("select[name='local_saida']");
+      localSelect.addEventListener("change", function () {
+        const local = this.value;
+        if (local) {
+          updateProductSelects(local);
+        } else {
+          // Se nenhum local for selecionado, limpa os selects e adiciona a opção "Selecione..."
+          document.querySelectorAll("select[name='produto[]']").forEach(select => {
+            select.innerHTML = '<option value="">Selecione...</option>';
+          });
+        }
+      });
+  
+      // Adiciona novo item de produto clonando o primeiro elemento do container
+      document.getElementById("add-produto").addEventListener("click", function () {
+        let container = document.getElementById("produtos-container");
+        let novoProduto = container.firstElementChild.cloneNode(true);
+        // Limpa o campo de quantidade do novo item
+        novoProduto.querySelector("input[name='quantidade[]']").value = "";
+        // Inicializa o select do novo item com a opção "Selecione..."
+        let select = novoProduto.querySelector("select[name='produto[]']");
+        select.innerHTML = '<option value="">Selecione...</option>';
+  
+        container.appendChild(novoProduto);
+  
+        // Se um local de saída estiver selecionado, atualiza os selects
+        const local = localSelect.value;
+        if (local) {
+          updateProductSelects(local);
+        }
+      });
+  
+      // Função para remover um item de produto
+      window.removerProduto = function (botao) {
+        let produtoItens = document.querySelectorAll(".produto-item");
+        if (produtoItens.length > 1) {
+          botao.parentElement.remove();
+        }
+      };
+    });
+  </script>
+    
+  <style>
+    .title-header {
+      background-color: #36475F;
+      width: 100%;
+      padding: 10px 0;
+      text-align: center;
+      border-radius: 5px 5px 0 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+  
+    .header-title {
+      color: white;
+      font-weight: bold;
+      font-size: 24px;
+    }
+  
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: white;
+      padding: 60px 20px 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      position: relative;
+    }
+  
+    /* Inputs, selects e textarea com largura consistente */
+    .form-container select, 
+    .form-container input, 
+    .form-group textarea {
+      width: 100%; /* Garante que todos ocupem 100% da largura */
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      display: block;
+      color: black;
+      background-color: white;
+    }
+  
+    .form-container select option {
+      color: black;
+    }
+  
+    .form-container select:focus, 
+    .form-container input:focus, 
+    .form-group textarea:focus {
+      border-color: #f89c1c;
+      outline: none;
+    }
+  
+    /* Alinha os labels à esquerda */
+    .form-group label {
+      display: block;
+      text-align: left; /* Alinha os labels à esquerda */
+      margin-bottom: 5px;
+    }
+  
+    /* Centraliza o label de Funcionário Responsável */
+    #responsavel-label {
+      text-align: center; /* Centraliza horizontalmente */
+    }
+  
+    .produto-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    } 
+  
+    .buttons-container {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      gap: 10px;
+      margin-top: 10px;
+    }
+  
+    .buttons-container button {
+      flex: 1;
+    }
+  
+    #add-produto {
+      width: 100%;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease-in-out;
+      margin-bottom: 10px;
+    }
+  
+    #add-produto:hover {
+      background: #45a049;
+    }
+  
+    .submit-button {
+      background: #f89c1c;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  
+    .submit-button:hover {
+      background: #e08916;
+    }
+  
+    .cancel-button {
+      background: #d9534f;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  
+    .cancel-button:hover {
+      background: #c9302c;
+    }
+    
+  </style>
+{% endblock %}

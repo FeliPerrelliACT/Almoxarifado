@@ -103,3 +103,42 @@ class Quotation(models.Model):
     def __str__(self):
         return f"Cotação para {self.request.request_text} - {self.file_id}"
 
+class CentroCusto(models.Model):
+    name = models.CharField(max_length=100)
+    status = models.BooleanField(default=True)
+    usuario_registrante = models.ForeignKey(User, on_delete=models.CASCADE)
+    data_cadastro = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class PlanoFinanceiro(models.Model):
+    name = models.CharField(max_length=100)
+    status = models.BooleanField(default=True)
+    usuario_registrante = models.ForeignKey(User, on_delete=models.CASCADE)
+    data_cadastro = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class Funcionario(models.Model):
+    usuario_registrante = models.ForeignKey(User, on_delete=models.CASCADE)
+    id_funcionario = models.CharField(max_length=50, unique=True)
+    data_cadastro = models.DateTimeField(auto_now_add=True)
+    cpf = models.CharField(max_length=14, unique=True)
+    status = models.BooleanField(default=True)
+    empresa = models.CharField(max_length=100)
+    cargo = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+class Armazem(models.Model):
+    name = models.CharField(max_length=100)
+    status = models.BooleanField(default=True)
+    usuario_registrante = models.ForeignKey(User, on_delete=models.CASCADE)
+    data_cadastro = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name

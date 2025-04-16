@@ -1,5 +1,9 @@
 {% extends '_layout1.html' %}
 
+{% block head_title %}
+  Entrada de Estoque
+{% endblock %}
+
 {% block content %}
   <div class="container">
     <!-- Faixa superior com cor e texto -->
@@ -9,8 +13,13 @@
 
     <form method="POST" enctype="multipart/form-data" class="form-container">
       {% csrf_token %}
-      <label for="local">Local:</label>
-      <input type="text" name="local" required>
+      <label for="local" class="mt-1">Local de Entrada:</label>
+      <select name="local" id="local" required>
+          <option value="">Selecione...</option>
+          {% for local in locais_entrada %}
+              <option value="{{ local }}">{{ local }}</option>
+          {% endfor %}
+      </select>
 
       <div id="produto-container">
         <div class="produto-item">
@@ -144,7 +153,7 @@
     }
 
     .cancelar-button {
-      background: #ccc;
+      background: #d9534f;
       color: white;
       border: none;
       padding: 10px;
@@ -154,7 +163,23 @@
     }
 
     .cancelar-button:hover {
-      background: #999;
+      background: #c9302c;
+    }
+
+    #add-produto {
+      width: 100%;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease-in-out;
+    }
+    
+    #add-produto:hover {
+      background: #45a049;
     }
 
     .buttons-container {
@@ -173,13 +198,15 @@
 
     .final-buttons-container {
       display: flex;
-      gap: 10px;
       justify-content: space-between;
+      gap: 10px;
     }
 
     .final-buttons-container .form-button {
-      width: 48%;
+      width: 50%;
     }
+
+    
     
   </style>
 {% endblock %}

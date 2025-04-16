@@ -1,0 +1,22 @@
+{% extends '_layout1.html' %}
+
+{% block content %}
+    <div class="container" style="max-width: 600px; margin-top: 22.5vh; margin-bottom: 22.5vh;">
+        <div class="card shadow-lg border-light rounded">
+            <div class="card-header text-white" style="background-color: #D6891F;">
+                <h5 class="card-title">{{ form_title }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'editar_plano_financeiro' plano.id %}">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="name">Nome do Plano financeiro</label>
+                        <input type="text" name="name" id="name" class="form-control" value="{{ plano.name }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning mt-2">Salvar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

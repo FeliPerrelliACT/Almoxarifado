@@ -5,32 +5,67 @@
 {% endblock %}
 
 {% block content %}
-{% with grupos=user.groups.all|join:"," %}
-    {% if 'suprimentos' in grupos %}
-        <div class="container mt-5 d-flex justify-content-center">
-            <div class="card p-4 shadow-sm" style="width: 400px;">
-                <h1 class="text-center mb-4">Editar Produto</h1>
+    {% with grupos=user.groups.all|join:"," %}
+        {% if 'suprimentos' in grupos %}
+            <div class="container mt-5 d-flex justify-content-center">
+                <div class="card p-4 shadow-sm" style="width: 400px;">
+                    <div class="title-header">
+                        <h2 class="text-center text-white">Editar Produto</h2>
+                    </div>
 
-                <!-- Formulário de Edição -->
-                <form method="POST">
-                    {% csrf_token %}
-                    <div class="form-group mb-3">
-                        {{ form.as_p }}
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <button type="submit" class="btn btn-success">Salvar</button>
-                        <a href="{% url 'product_list' %}" class="btn btn-secondary">Cancelar</a>
-                    </div>
-                </form>
+
+                    <!-- Formulário de Edição -->
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            {{ form.as_p }}
+                        </div>
+                        <div class="botoes d-flex justify-content-between">
+                            <button type="submit" class="btn btn-success">Salvar</button>
+                            <a href="{% url 'product_list' %}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
-    {% else %}
-        <!-- Mensagem de erro caso o usuário não tenha permissão -->
-        <div class="container mt-5">
-            <div class="alert alert-danger" role="alert">
-                Você não tem permissão para acessar esta página.
+        {% else %}
+            <!-- Mensagem de erro caso o usuário não tenha permissão -->
+            <div class="container mt-5">
+                <div class="alert alert-danger" role="alert">
+                    Você não tem permissão para acessar esta página.
+                </div>
             </div>
-        </div>
-    {% endif %}
-{% endwith %}
+        {% endif %}
+    {% endwith %}
+
+    <style>
+        /* Faixa superior para o título */
+        .title-header {
+          background-color: #36475F;
+          width: 100%;
+          padding: 10px 0;
+          position: absolute;
+          top: 0;
+          left: 0;
+          text-align: center;
+          border-radius: 5px 5px 0 0;
+        }
+
+        .header-title {
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+          }
+
+          .botoes {
+            gap: 10px;
+          }
+
+          form{
+            margin-top: 60px;
+          }
+
+          .btn {
+            width: 100%;
+          }
+    </style>
 {% endblock %}
