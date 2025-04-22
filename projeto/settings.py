@@ -122,5 +122,3 @@ MESSAGE_TAGS = {
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-
-DEBUG = True
