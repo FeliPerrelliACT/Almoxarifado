@@ -12,7 +12,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://trusting-trusted-kit.ngrok-free.app',
 ]
 
-ALLOWED_HOSTS = ['trusting-trusted-kit.ngrok-free.app', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -57,13 +57,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'projeto.wsgi.application'
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "sig",
-        "USER": "root",
-        "PASSWORD": "1234",
-        "HOST": "127.0.0.1",
-        "PORT": "3306",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'sig_pzgt',
+        'USER': 'root',
+        'PASSWORD': '5LzH7l5gGDOBxSTt9aUpOlwWpYErNzZM',
+        'HOST': 'dpg-d03u09ngi27c738d997g-a.oregon-postgres.render.com',
+        'PORT': '5432',
     }
 }
 
