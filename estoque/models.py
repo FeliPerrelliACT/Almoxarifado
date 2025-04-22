@@ -1,8 +1,8 @@
-from suprimentos.models import Product, Funcionario
-from django.contrib.auth.models import User
+from suprimentos.models import Product, Funcionario, CentroCusto
 from django.utils.timezone import now
 from django.utils import timezone
 from django.conf import settings
+from accounts.forms import User
 from django.db import models
 
 # Modelo de Estoque
@@ -30,13 +30,14 @@ class SaidaEstoque(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     local = models.CharField(max_length=255)
     quantidade = models.PositiveIntegerField()
-    usuario_registrante = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
-    responsavel = models.ForeignKey(Funcionario, on_delete=models.SET_NULL, null=True, blank=True)  # Novo campo
-    data_saida = models.DateTimeField(auto_now_add=True)
+    responsavel = models.ForeignKey(Funcionario, on_delete=models.SET_NULL, null=True)
+    centro_custo = models.ForeignKey(CentroCusto, on_delete=models.SET_NULL, null=True)
     observacao = models.TextField(blank=True, null=True)
+    usuario_registrante = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    data_saida = models.DateTimeField(default=now)
 
     def __str__(self):
-        return f"Saída de {self.quantidade} de {self.product.product_name} no local {self.local} (Responsável: {self.responsavel})"
+        return f"Saída de {self.quantidade} {self.product.product_name} do local {self.local}"
 
 # Modelo de log de transferências entre locais
 class TransferenciaEstoque(models.Model):
@@ -45,7 +46,7 @@ class TransferenciaEstoque(models.Model):
     local_entrada = models.CharField(max_length=255)
     quantidade = models.PositiveIntegerField()
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    responsavel = models.ForeignKey(Funcionario, on_delete=models.SET_NULL, null=True, blank=True)  # Novo campo
+    responsavel = models.ForeignKey(Funcionario, on_delete=models.SET_NULL, null=True, blank=True)
     data_transferencia = models.DateTimeField(default=timezone.now)
     observacao = models.TextField(blank=True, null=True)
 

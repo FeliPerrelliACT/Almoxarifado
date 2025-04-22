@@ -40,7 +40,7 @@ urlpatterns = [
     # centros de custo
     path('centros-custo/', views.listar_centros_custo, name='listar_centros_custo'),
     path('centros-custo/cadastrar/', views.cadastrar_centro_custo, name='cadastrar_centro_custo'),
-    path('centros-custo/editar/<int:centro_id>/', views.editar_centro_custo, name='editar_centro_custo'),
+    path('centrocusto/editar/<int:centrocusto_id>/', views.editar_centro_custo, name='editar_centro_custo'),
     path('centros-custo/toggle-status/<int:centro_id>/', views.toggle_centro_custo_status, name='toggle_centro_custo_status'),
 
     # planos financeiros

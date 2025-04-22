@@ -1,5 +1,5 @@
 from .models import SaidaEstoque, TransferenciaEstoque 
-from suprimentos.models import Product, Funcionario
+from suprimentos.models import Product, Funcionario, CentroCusto
 from django import forms
 
 class EntradaEstoqueForm(forms.Form):
@@ -10,24 +10,17 @@ class EntradaEstoqueForm(forms.Form):
     )
     quantidade = forms.IntegerField(label="Quantidade", min_value=1)
 
-class SaidaEstoqueForm(forms.ModelForm):
-    class Meta:
-        model = SaidaEstoque
-        fields = ['product', 'local', 'quantidade', 'responsavel', 'observacao']
-        widgets = {
-            'product': forms.Select(attrs={'class': 'form-control'}),
-            'local': forms.TextInput(attrs={'class': 'form-control'}),
-            'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'responsavel': forms.Select(attrs={'class': 'form-control'}),
-            'observacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-        labels = {
-            'product': 'Produto',
-            'local': 'Local',
-            'quantidade': 'Quantidade',
-            'responsavel': 'Responsável',
-            'observacao': 'Observação',
-        }
+class SaidaEstoqueForm(forms.Form):
+    local = forms.CharField(label="Local", max_length=255)
+    responsavel = forms.ModelChoiceField(queryset=Funcionario.objects.filter(status=True), label="Responsável")
+    centro_custo = forms.ModelChoiceField(queryset=CentroCusto.objects.all(), label="Centro de Custo")
+    observacao = forms.CharField(widget=forms.Textarea, required=False, label="Observação")
+
+    def clean_quantidade(self):
+        quantidade = self.cleaned_data.get('quantidade')
+        if quantidade <= 0:
+            raise forms.ValidationError("A quantidade deve ser maior que zero.")
+        return quantidade
 
 class TransferenciaEstoqueForm(forms.ModelForm):
     class Meta:

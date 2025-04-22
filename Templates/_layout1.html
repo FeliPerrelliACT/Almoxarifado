@@ -54,16 +54,18 @@
                     <hr class="text-white">
 
             {% with grupos=user.groups.all|join:"," %}
-                {% if 'estoque' in grupos or 'suprimentos' in grupos %}
+                {% if 'almoxerifado' in grupos or 'suprimentos' in grupos %}
                     <a href="{% url 'lista_estoque' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Gestão de Estoque</a>
                     <hr class="text-white">
                 {% endif %}
                 {% if 'suprimentos' in grupos %}
-                    <a href="{% url 'cadastrar_armazem' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;"> Armazem </a>
+                    <a href="{% url 'listar_armazens' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;"> Armazem </a>
                     <hr class="text-white">
                     <a href="{% url 'product_list' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Produtos</a>
                     <hr class="text-white">
                     <a href="{% url 'listar_funcionarios' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Funcionário</a>
+                    <hr class="text-white">
+                    <a href="{% url 'listar_centros_custo' %}" class="d-block text-white mb-2 menu-item" style="font-size: 16px; text-decoration: none;">Centros de Custo</a>
                 {% endif %}
             {% endwith %}
         </div>

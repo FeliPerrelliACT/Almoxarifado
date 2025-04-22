@@ -673,27 +673,30 @@ def listar_centros_custo(request):
     return render(request, 'suprimentos/centrocusto/centrocusto_list.html', context)
 
 @login_required
-def editar_centro_custo(request, centro_id):
-    centro = get_object_or_404(CentroCusto, id=centro_id)
-    
-    if request.method == "POST":
-        # Salva apenas o nome do centro de custo
-        centro.name = request.POST.get('name')
-        centro.save()
-        return redirect('listar_centros_custo')  # Redireciona após a edição
-    
-    context = {
-        'form_title': 'Editar Centro de Custo',
-        'centro': centro,
-    }
-    return render(request, 'suprimentos/centrocusto/editar_centrocusto_form.html', context)
+def editar_centro_custo(request, centrocusto_id):
+    centrocusto = get_object_or_404(CentroCusto, id=centrocusto_id)
+    if request.method == 'POST':
+        form = CentroCustoForm(request.POST, instance=centrocusto)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_centros_custo')  # Redireciona para a lista de centros de custo
+    else:
+        form = CentroCustoForm(instance=centrocusto)  # Inicializa o formulário com a instância
+    return render(request, 'suprimentos/centrocusto/editar_centrocusto_form.html', {'form': form, 'centrocusto': centrocusto})
 
 @login_required
 def toggle_centro_custo_status(request, centro_id):
-    centro_custo = CentroCusto.objects.get(id=centro_id)
-    centro_custo.status = not centro_custo.status
+    centro_custo = get_object_or_404(CentroCusto, id=centro_id)
+    
+    if centro_custo.status:  # Se o centro de custo está ativo
+        centro_custo.status = False  # Desativa o centro de custo
+        centro_custo.data_inativacao = timezone.now()  # Define a data de inativação com o horário atual
+    else:  # Se o centro de custo já está inativo
+        centro_custo.status = True  # Ativa o centro de custo
+        centro_custo.data_inativacao = None  # Limpa a data de inativação
+    
     centro_custo.save()
-    return redirect('listar_centros_custo')
+    return redirect('listar_centros_custo')  # Redireciona para a lista de centros de custo
 
 # Plano Financeiro
 
@@ -808,17 +811,27 @@ def listar_armazens(request):
 
 @login_required
 def editar_armazem(request, armazem_id):
+    # Obtém o armazém pelo ID ou retorna 404 se não encontrado
     armazem = get_object_or_404(Armazem, id=armazem_id)
     
     if request.method == "POST":
-        # Salva apenas o nome do armazém
-        armazem.name = request.POST.get('name')
-        armazem.save()
-        return redirect('listar_armazens')  # Redireciona após a edição
+        # Cria o formulário com os dados enviados e associa ao armazém
+        form = ArmazemForm(request.POST, instance=armazem)
+        if form.is_valid():
+            form.save()  # Salva as alterações no banco de dados
+            messages.success(request, 'Armazém atualizado com sucesso!')
+            return redirect('listar_armazens')  # Redireciona para a lista de armazéns
+        else:
+            messages.error(request, 'Erro ao atualizar o armazém. Verifique os dados.')
+    else:
+        # Cria o formulário com os dados do armazém existente
+        form = ArmazemForm(instance=armazem)
     
+    # Renderiza o template com o formulário
     context = {
-        'form_title': 'Editar Armazém',
+        'form': form,
         'armazem': armazem,
+        'form_title': 'Editar Armazém',
     }
     return render(request, 'suprimentos/armazem/editar_armazem_form.html', context)
 
@@ -901,9 +914,15 @@ def editar_funcionario(request, funcionario_id):
 @login_required
 def toggle_funcionario_status(request, funcionario_id):
     funcionario = get_object_or_404(Funcionario, id=funcionario_id)
-    funcionario.status = not funcionario.status  # Alterna o status
+    
+    if funcionario.status:  # Se o funcionário está ativo
+        funcionario.status = False  # Desativa o funcionário
+        funcionario.data_inativacao = timezone.now()  # Define a data de inativação com o horário atual
+    else:  # Se o funcionário já está inativo
+        funcionario.status = True  # Ativa o funcionário
+        funcionario.data_inativacao = None  # Limpa a data de inativação
+    
     funcionario.save()
-    messages.success(request, f'Status do funcionário "{funcionario.name}" atualizado com sucesso!')
+    messages.success(request, f'Status do funcionário "{funcionario.nome_completo}" atualizado com sucesso!')
     return redirect('listar_funcionarios')  # Redireciona para a lista de funcionários
-
 

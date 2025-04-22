@@ -1,15 +1,77 @@
+<!-- filepath: c:\Users\offic\Desktop\CODIGOS\SIG-main\Templates\suprimentos\armazem\cadastrar_armazem_form.html -->
 {% extends '_layout1.html' %}
 
-{% block content %}
-    <div class="container">
-        <div class="title-header">
-            <h2 class="header-title">Cadastrar Armazém</h2>
-        </div>
+{% block head_title %}
+    Cadastrar Armazém
+{% endblock %}
 
-        <form method="post" class="form-container">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="submit-button">Salvar</button>
-        </form>
-    </div>
+{% block content %}
+    {% with grupos=user.groups.all|join:"," %}
+        {% if 'suprimentos' in grupos %}
+            <div class="container mt-5 d-flex justify-content-center">
+                <div class="card p-4 shadow-sm" style="width: 400px;">
+                    <div class="title-header">
+                        <h2 class="text-center text-white">Cadastrar Armazém</h2>
+                    </div>
+
+                    <!-- Formulário de Cadastro -->
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            {{ form.as_p }}
+                        </div>
+                        <div class="botoes d-flex justify-content-between">
+                            <button type="submit" class="btn btn-success">Salvar</button>
+                            <a href="{% url 'listar_armazens' %}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <!-- Mensagem de erro caso o usuário não tenha permissão -->
+            <div class="container mt-5">
+                <div class="alert alert-danger" role="alert">
+                    Você não tem permissão para acessar esta página.
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <style>
+        /* Faixa superior para o título */
+        .title-header {
+          background-color: #36475F;
+          width: 100%;
+          padding: 10px 0;
+          position: absolute;
+          top: 0;
+          left: 0;
+          text-align: center;
+          border-radius: 5px 5px 0 0;
+        }
+
+        .header-title {
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .botoes {
+            gap: 10px;
+        }
+
+        input {
+            border-radius: 5px;
+            padding: 5px;
+            width: 85%;
+        }
+
+        form {
+            margin-top: 60px;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    </style>
 {% endblock %}

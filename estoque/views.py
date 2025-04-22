@@ -1,5 +1,5 @@
 from .models import Estoque, EntradaEstoque, SaidaEstoque, TransferenciaEstoque
-from suprimentos.models import Product, Armazem, Funcionario
+from suprimentos.models import Product, Armazem, Funcionario, CentroCusto
 from django.contrib.auth.decorators import login_required
 from .forms import EntradaEstoqueForm, SaidaEstoqueForm
 from django.http import HttpResponse, JsonResponse
@@ -7,10 +7,10 @@ from django.shortcuts import render, redirect
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.pagesizes import A4
 from django.utils.timezone import now
-from django.db.models import Q, Sum
 from reportlab.pdfgen import canvas
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Q
 from datetime import datetime
 from io import BytesIO
 import pandas as pd
@@ -49,7 +49,7 @@ def entrada_estoque(request):
         form = EntradaEstoqueForm()
 
     # Buscar apenas os nomes dos armazéns
-    locais_entrada = Armazem.objects.values_list('name', flat=True)
+    locais_entrada = Armazem.objects.filter(status=1).values_list('name', flat=True)
 
     return render(request, 'estoque/forms/entrada_estoque.html', {
         'form': form,
@@ -59,82 +59,74 @@ def entrada_estoque(request):
 @login_required
 def saida_estoque(request):
     if request.method == 'POST':
-        try:
-            local = request.POST.get('local')
-            responsavel_id = request.POST.get('responsavel')
-            usuario = request.user
+        form = SaidaEstoqueForm(request.POST)
+        if form.is_valid():
+            local = form.cleaned_data['local']
+            responsavel = form.cleaned_data['responsavel']
+            centro_custo = form.cleaned_data['centro_custo']
+            observacao = form.cleaned_data['observacao']
+            produtos = request.POST.getlist('produto[]')  # Captura os produtos dinâmicos
+            quantidades = request.POST.getlist('quantidade[]')  # Captura as quantidades dinâmicas
 
-            # Captura todos os produtos e quantidades dinamicamente
-            produtos = []
-            quantidades = []
-            for key, value in request.POST.items():
-                if key.startswith('produto-'):
-                    produtos.append(value)
-                if key.startswith('quantidade-'):
-                    quantidades.append(value)
-
-            # Verifica se os campos obrigatórios estão preenchidos
-            if not local:
-                messages.error(request, "O campo 'Local' é obrigatório.")
-                return redirect('saida_estoque')
             if not produtos or not quantidades:
-                messages.error(request, "Os campos 'Produto' e 'Quantidade' são obrigatórios.")
+                messages.error(request, "É necessário adicionar pelo menos um produto e quantidade.")
                 return redirect('saida_estoque')
 
-            with transaction.atomic():
-                for i in range(len(produtos)):
-                    produto_id = produtos[i]
-                    try:
+            try:
+                with transaction.atomic():
+                    for i in range(len(produtos)):
+                        produto_id = produtos[i]
                         quantidade = int(quantidades[i])
-                        if quantidade <= 0:
-                            raise ValueError("A quantidade deve ser maior que zero.")
-                    except ValueError as ve:
-                        messages.error(request, f"Quantidade inválida para o produto {produto_id}: {ve}")
-                        return redirect('saida_estoque')
-
-                    try:
                         produto = Product.objects.get(id=produto_id)
-                    except Product.DoesNotExist:
-                        messages.error(request, f"Produto com ID {produto_id} não encontrado.")
-                        return redirect('saida_estoque')
 
-                    try:
+                        # Verifica se o produto existe no estoque
                         estoque = Estoque.objects.get(product=produto, local=local)
-                    except Estoque.DoesNotExist:
-                        messages.error(request, f"Estoque para o produto {produto.product_name} no local {local} não encontrado.")
-                        return redirect('saida_estoque')
+                        if estoque.quantidade < quantidade:
+                            messages.error(request, f"Estoque insuficiente para {produto.product_name}. Disponível: {estoque.quantidade}")
+                            return redirect('saida_estoque')
 
-                    if estoque.quantidade < quantidade:
-                        messages.error(request, f"Estoque insuficiente para {produto.product_name}.")
-                        return redirect('saida_estoque')
+                        # Atualiza o estoque
+                        estoque.quantidade -= quantidade
+                        estoque.save()
 
-                    # Atualiza o estoque
-                    estoque.quantidade -= quantidade
-                    estoque.save()
+                        # Registra a saída com o usuário logado (usuario_registrante)
+                        SaidaEstoque.objects.create(
+                            product=produto,
+                            local=local,
+                            quantidade=quantidade,
+                            responsavel=responsavel,
+                            centro_custo=centro_custo,
+                            observacao=observacao,
+                            usuario_registrante=request.user  # Aqui você adiciona o usuário logado
+                        )
 
-                    # Registra a saída no log
-                    SaidaEstoque.objects.create(
-                        product=produto,
-                        local=local,
-                        quantidade=quantidade,
-                        usuario_registrante=usuario,
-                        responsavel_id=responsavel_id
-                    )
+                    messages.success(request, "Saída registrada com sucesso.")
+                    return redirect('lista_estoque')
+            except Estoque.DoesNotExist:
+                messages.error(request, "O local ou produto especificado não existe no estoque.")
+                return redirect('saida_estoque')
+            except Exception as e:
+                messages.error(request, f"Erro ao registrar a saída: {e}")
+                return redirect('saida_estoque')
+        else:
+            # Exibe os erros do formulário
+            for field, errors in form.errors.items():
+                messages.error(request, f"Erro no campo {field}: {', '.join(errors)}")
+    else:
+        form = SaidaEstoqueForm()
 
-            messages.success(request, "Saída registrada com sucesso.")
-            return redirect('lista_estoque')
+    # Filtragem dos locais que possuem produtos com quantidade > 0
+    locais_estoque_validos = Estoque.objects.filter(quantidade__gt=0).values_list('local', flat=True).distinct()
 
-        except Exception as e:
-            messages.error(request, f"Ocorreu um erro inesperado: {e}")
-            return redirect('saida_estoque')
-
-    # Obter os locais de saída disponíveis
-    locais_estoque = Estoque.objects.values_list('local', flat=True).distinct()
+    # Passa os dados necessários para o template
     funcionarios = Funcionario.objects.filter(status=True)
+    centros_custo = CentroCusto.objects.all()
 
     return render(request, 'estoque/forms/saida_estoque.html', {
-        'locais_estoque': locais_estoque,
+        'form': form,
+        'locais_estoque': locais_estoque_validos,  # Passando apenas locais válidos
         'funcionarios': funcionarios,
+        'centros_custo': centros_custo,
     })
 
 @login_required
@@ -160,7 +152,7 @@ def lista_estoque(request):
     search = request.GET.get('search', '')
     local = request.GET.get('local', '')
     unidade = request.GET.get('unidade', '')
-    tipo = request.GET.get('tipo', '')
+    categoria = request.GET.get('categoria', '')
     quantidade = request.GET.get('quantidade', '')  # Get the quantidade filter
 
     # Apply filters based on the received parameters
@@ -173,8 +165,8 @@ def lista_estoque(request):
         estoque = estoque.filter(local=local)
     if unidade:
         estoque = estoque.filter(product__unidade_medida=unidade)
-    if tipo:
-        estoque = estoque.filter(product__tipo=tipo)
+    if categoria:
+        estoque = estoque.filter(product__categoria=categoria)
     if quantidade:
         estoque = estoque.filter(quantidade=quantidade)  # Filter by quantity
 
@@ -197,7 +189,7 @@ def exportar_estoque_excel(request):
     search = request.GET.get('search', '')
     local = request.GET.get('local', '')
     unidade = request.GET.get('unidade', '')
-    tipo = request.GET.get('tipo', '')
+    categoria = request.GET.get('categoria', '')
 
     # Aplicando os filtros conforme os parâmetros recebidos
     if search:
@@ -209,8 +201,8 @@ def exportar_estoque_excel(request):
         estoque = estoque.filter(local=local)
     if unidade:
         estoque = estoque.filter(product__unidade_medida=unidade)
-    if tipo:
-        estoque = estoque.filter(product__tipo=tipo)
+    if categoria:
+        estoque = estoque.filter(product__categoria=categoria)
 
     # Criando um DataFrame com os dados filtrados
     data = []
@@ -219,13 +211,13 @@ def exportar_estoque_excel(request):
             item.product.product_name,
             item.quantidade,  # Quantidade agora vem logo após o nome do produto
             item.product.unidade_medida,
-            "Uso único" if item.product.tipo == "unico" else "Reutilizável",
+            "Uso único" if item.product.categoria == "unico" else "Reutilizável",
             "Ativo" if item.product.status else "Inativo",
             item.local
         ])
 
     df = pd.DataFrame(data, columns=[
-        "Nome do Produto", "Quantidade", "Unidade de Medida", "Tipo", "Status", "Local"
+        "Nome do Produto", "Quantidade", "Unidade de Medida", "Categoria", "Status", "Local"
     ])
 
     # Criando um arquivo Excel na memória
@@ -244,7 +236,7 @@ def exportar_estoque_pdf(request):
     search = request.GET.get('search', '')
     local = request.GET.get('local', '')
     unidade = request.GET.get('unidade', '')
-    tipo = request.GET.get('tipo', '')
+    categoria = request.GET.get('categoria', '')
 
     # Aplicando filtros conforme os parâmetros recebidos
     if search:
@@ -256,8 +248,8 @@ def exportar_estoque_pdf(request):
         estoque = estoque.filter(local=local)
     if unidade:
         estoque = estoque.filter(product__unidade_medida=unidade)
-    if tipo:
-        estoque = estoque.filter(product__tipo=tipo)
+    if categoria:
+        estoque = estoque.filter(product__categoria=categoria)
 
     # Criando o arquivo PDF em memória
     buffer = BytesIO()
@@ -297,7 +289,7 @@ def exportar_estoque_pdf(request):
         ("Produto", margem_esquerda),
         ("Qtd", 180),
         ("Unidade", 230),
-        ("Tipo", 300),
+        ("Categoria", 300),
         ("Status", 370),
         ("Local", 450),
     ]
@@ -311,7 +303,7 @@ def exportar_estoque_pdf(request):
         p.drawString(margem_esquerda, y_position, item.product.product_name[:20])  # Nome limitado
         p.drawString(180, y_position, str(item.quantidade))
         p.drawString(230, y_position, item.product.unidade_medida)
-        p.drawString(300, y_position, "Uso único" if item.product.tipo == "unico" else "Reutilizável")
+        p.drawString(300, y_position, item.product.categoria)
         p.drawString(370, y_position, "Ativo" if item.product.status else "Inativo")
         p.drawString(450, y_position, item.local[:20])  # Local limitado
 
@@ -376,7 +368,7 @@ def transferencia_produto(usuario, produto_id, local_saida, local_entrada, quant
     if estoque_saida.quantidade < quantidade:
         raise Exception(f"Quantidade insuficiente no local de saída: {local_saida}.")
     
-    # Iniciar uma transação para garantir que tudo seja feito de forma atômica
+    # Iniciar uma transação para garantir que tudo seja feito
     with transaction.atomic():
         # Subtrair a quantidade do local de saída
         estoque_saida.quantidade -= quantidade
@@ -449,12 +441,17 @@ def transferencia_view(request):
             messages.error(request, f"Ocorreu um erro: {e}")
             return redirect('transferencia_estoque')
 
+    # Filtragem de armazéns com status=1
+    locais_entrada_ativos = Armazem.objects.filter(status=1)
+
+    # Filtragem dos locais de saída com produtos em estoque (quantidade > 0)
+    locais_saida_com_produtos = Estoque.objects.filter(quantidade__gt=0).values_list('local', flat=True).distinct()
+
     return render(request, 'estoque/forms/transferencia_estoque.html', {
-        'locais_saida': Estoque.objects.values_list('local', flat=True).distinct(),
-        'locais_entrada': Armazem.objects.values_list('name', flat=True),
+        'locais_saida': locais_saida_com_produtos,  # Passando os locais de saída com produtos > 0
+        'locais_entrada': locais_entrada_ativos,  # Passando os armazéns com status 1
         'funcionarios': Funcionario.objects.filter(status=True),
     })
-
 
 
 

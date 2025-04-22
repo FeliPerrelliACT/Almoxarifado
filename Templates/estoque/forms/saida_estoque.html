@@ -24,145 +24,177 @@
         </div>
 
         <div class="form-group">
+            <label for="centro_custo">Centro de Custo:</label>
+            <select name="centro_custo" id="centro_custo" class="form-control">
+                <option value="">Selecione...</option>
+                {% for centro in centros_custo %}
+                    {% if centro.status == 1 %}
+                        <option value="{{ centro.id }}">{{ centro.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
             <label for="responsavel">Responsável:</label>
             <select name="responsavel" id="responsavel" class="form-control">
                 <option value="">Selecione...</option>
                 {% for funcionario in funcionarios %}
-                <option value="{{ funcionario.id }}">{{ funcionario.name }}</option>
-                {% endfor %}
+                  {% if funcionario.status == 1 %}
+                      <option value="{{ funcionario.id }}">{{ funcionario.nome_completo }}</option>
+                  {% endif %}
+              {% endfor %}
             </select>
         </div>
 
         <div>
             <label for="observacao">Observação:</label>
-            <textarea name="observacao" id="observacao" class="form-control" rows="4" placeholder="Adicione observações, se necessário."></textarea></textarea>
+            <textarea name="observacao" id="observacao" class="form-control" rows="4" placeholder="Adicione observações, se necessário."></textarea>
         </div>
 
         <div id="produto-container"></div>
 
         <div class="buttons-container">
-          <button type="button" id="adicionar-produto" class="btn form-button">+ Adicionar Produto</button>
+            <button type="button" id="adicionar-produto" class="btn form-button">+ Adicionar Produto</button>
         </div>
 
         <div class="final-buttons-container">
-          <button type="button" id="cancel-button" class="btn form-button" onclick="window.history.back();">Cancelar</button>
-          <button type="submit" id="submit-button" class="btn form-button">Registrar Saída</button>
+            <button type="button" id="cancel-button" class="btn form-button" onclick="window.history.back();">Cancelar</button>
+            <button type="submit" id="submit-button" class="btn form-button">Registrar Saída</button>
         </div>
     </form>
   </div>
 
   <script>
-    // Função para criar um novo campo de produto
-    function criarCampoProduto(index) {
-      let div = document.createElement('div');
-      div.classList.add('produto-item');
+      // Função para criar um novo campo de produto
+      function criarCampoProduto(index) {
+          let div = document.createElement('div');
+          div.classList.add('produto-item');
 
-      div.innerHTML = `
-        <label for="produto-${index}">Produto:</label>
-        <select name="produto-${index}" class="produto-select form-control" required>
-          <option value="">Selecione...</option>
-        </select>
-        <label for="quantidade-${index}">Quantidade:</label>
-        <input type="number" name="quantidade-${index}" class="quantidade-input form-control" min="1" placeholder="Máx: 0" required>
-        <button type="button" class="remove-produto btn btn-danger">Remover</button>
-      `;
+          div.innerHTML = `
+              <label for="produto-${index}">Produto:</label>
+              <select name="produto[]" class="produto-select form-control" required>
+                  <option value="">Selecione...</option>
+              </select>
+              <label for="quantidade-${index}">Quantidade:</label>
+              <input type="number" name="quantidade[]" class="quantidade-input form-control" min="1" placeholder="Máx: 0" required>
+              <button type="button" class="remove-produto btn btn-danger">Remover</button>
+          `;
 
-      // Adicionar evento para remover o campo
-      div.querySelector('.remove-produto').addEventListener('click', function () {
-        if (document.querySelectorAll('.produto-item').length > 1) {
-          div.remove();
-        } else {
-          alert("É necessário ter pelo menos um produto.");
-        }
-      });
+          // Adiciona evento para remover o campo
+          div.querySelector('.remove-produto').addEventListener('click', function () {
+              div.remove();
+          });
 
-      return div;
-    }
-
-    // Função para atualizar os selects de produtos
-    function atualizarSelectProdutos(selectElement, produtos) {
-      selectElement.innerHTML = '<option value="">Selecione...</option>';
-      produtos.forEach(function (produto) {
-        const option = document.createElement('option');
-        option.value = produto.id;
-        option.textContent = produto.product.product_name; // Nome do produto
-        option.dataset.quantidadeMax = produto.quantidade; // Quantidade máxima disponível
-        selectElement.appendChild(option);
-      });
-
-      // Adicionar evento para atualizar o input de quantidade
-      selectElement.addEventListener('change', function () {
-        const selectedOption = selectElement.options[selectElement.selectedIndex];
-        const maxQuantidade = selectedOption.dataset.quantidadeMax || 1;
-
-        const quantidadeInput = selectElement.parentElement.querySelector('.quantidade-input');
-        quantidadeInput.setAttribute('max', maxQuantidade);
-        quantidadeInput.setAttribute('placeholder', `Máx: ${maxQuantidade}`); // Mostra o máximo no placeholder
-      });
-    }
-
-    // Inicializar o formulário com pelo menos um campo de produto
-    const produtoContainer = document.getElementById('produto-container');
-    const inicializarProduto = () => {
-      const campoInicial = criarCampoProduto(0);
-      produtoContainer.appendChild(campoInicial);
-
-      // Atualizar o select com os produtos disponíveis, se já carregados
-      const selectInicial = campoInicial.querySelector('.produto-select');
-      if (window.produtosDisponiveis) {
-        atualizarSelectProdutos(selectInicial, window.produtosDisponiveis);
+          return div;
       }
-    };
 
-    inicializarProduto();
+      // Função para atualizar os selects de produtos
+      function atualizarSelectProdutos(selectElement, produtos) {
+          selectElement.innerHTML = '<option value="">Selecione...</option>';
+          produtos.forEach(function (produto) {
+              const option = document.createElement('option');
+              option.value = produto.id;
+              option.textContent = produto.product.product_name; // Nome do produto
+              option.dataset.quantidadeMax = produto.quantidade; // Quantidade máxima disponível
+              selectElement.appendChild(option);
+          });
 
-    // Adicionar mais campos de produto dinamicamente
-    document.getElementById('adicionar-produto').addEventListener('click', function () {
-      const index = produtoContainer.children.length;
-      const novoCampo = criarCampoProduto(index);
-      produtoContainer.appendChild(novoCampo);
+          // Adicionar evento para atualizar o input de quantidade
+          selectElement.addEventListener('change', function () {
+              const selectedOption = selectElement.options[selectElement.selectedIndex];
+              const maxQuantidade = selectedOption.dataset.quantidadeMax || 1;
 
-      // Atualizar o novo select com os produtos disponíveis
-      const novoSelect = novoCampo.querySelector('.produto-select');
-      if (window.produtosDisponiveis) {
-        atualizarSelectProdutos(novoSelect, window.produtosDisponiveis);
+              const quantidadeInput = selectElement.parentElement.querySelector('.quantidade-input');
+              quantidadeInput.setAttribute('max', maxQuantidade);
+              quantidadeInput.setAttribute('placeholder', `Máx: ${maxQuantidade}`); // Mostra o máximo no placeholder
+          });
       }
+
+      // Inicializar o formulário com pelo menos um campo de produto
+      const produtoContainer = document.getElementById('produto-container');
+      const inicializarProduto = () => {
+          const campoInicial = criarCampoProduto(0);
+          produtoContainer.appendChild(campoInicial);
+
+          // Atualizar o select com os produtos disponíveis, se já carregados
+          const selectInicial = campoInicial.querySelector('.produto-select');
+          if (window.produtosDisponiveis) {
+              atualizarSelectProdutos(selectInicial, window.produtosDisponiveis);
+          }
+      };
+
+      inicializarProduto();
+
+      // Adicionar mais campos de produto dinamicamente
+      document.getElementById('adicionar-produto').addEventListener('click', function () {
+        const index = document.querySelectorAll('.produto-item').length;
+        const div = document.createElement('div');
+        div.classList.add('produto-item');
+    
+        div.innerHTML = `
+            <label for="produto-${index}">Produto:</label>
+            <select name="produto[]" class="produto-select form-control" required>
+                <option value="">Selecione...</option>
+            </select>
+            <label for="quantidade-${index}">Quantidade:</label>
+            <input type="number" name="quantidade[]" class="quantidade-input form-control" min="1" required>
+            <button type="button" class="remove-produto btn btn-danger">Remover</button>
+        `;
+    
+        div.querySelector('.remove-produto').addEventListener('click', function () {
+            div.remove();
+        });
+    
+        document.getElementById('produto-container').appendChild(div);
     });
 
-    // Carregar produtos ao selecionar o local
-    document.getElementById('local').addEventListener('change', function () {
-      const local = this.value;
-      console.log("Local selecionado:", local); // Log para depuração
+      // Carregar produtos ao selecionar o local
+      document.getElementById('local').addEventListener('change', function () {
+          const local = this.value;
+          console.log("Local selecionado:", local); // Log para depuração
 
-      if (local) {
-        fetch(`/estoque/get_produtos_por_local/${local}/`)
-          .then(response => response.json())
-          .then(data => {
-            console.log("Produtos recebidos:", data.produtos); // Log para depuração
+          if (local) {
+              fetch(`/estoque/get_produtos_por_local/${local}/`)
+                  .then(response => response.json())
+                  .then(data => {
+                      console.log("Produtos recebidos:", data.produtos); // Log para depuração
 
-            // Atualizar todos os selects de produto existentes
-            document.querySelectorAll('.produto-select').forEach(produtoSelect => {
-              atualizarSelectProdutos(produtoSelect, data.produtos);
-            });
+                      // Atualizar todos os selects de produto existentes
+                      document.querySelectorAll('.produto-select').forEach(produtoSelect => {
+                          atualizarSelectProdutos(produtoSelect, data.produtos);
+                      });
 
-            // Armazenar os produtos disponíveis globalmente para novos selects
-            window.produtosDisponiveis = data.produtos;
-          })
-          .catch(error => {
-            console.error('Erro ao carregar os produtos:', error);
-          });
-      } else {
-        // Limpar os selects de produtos se nenhum local for selecionado
-        document.querySelectorAll('.produto-select').forEach(produtoSelect => {
-          produtoSelect.innerHTML = '<option value="">Selecione...</option>';
+                      // Armazenar os produtos disponíveis globalmente para novos selects
+                      window.produtosDisponiveis = data.produtos;
+                  })
+                  .catch(error => {
+                      console.error('Erro ao carregar os produtos:', error);
+                  });
+          } else {
+              // Limpar os selects de produtos se nenhum local for selecionado
+              document.querySelectorAll('.produto-select').forEach(produtoSelect => {
+                  produtoSelect.innerHTML = '<option value="">Selecione...</option>';
+              });
+              window.produtosDisponiveis = []; // Limpar produtos disponíveis
+          }
+      });
+
+      document.getElementById('submit-button').addEventListener('click', function (event) {
+        const produtos = document.querySelectorAll('select[name="produto[]"]');
+        const quantidades = document.querySelectorAll('input[name="quantidade[]"]');
+    
+        produtos.forEach((produto, index) => {
+            console.log(`Produto ${index}:`, produto.value);
         });
-        window.produtosDisponiveis = []; // Limpar produtos disponíveis
-      }
+    
+        quantidades.forEach((quantidade, index) => {
+            console.log(`Quantidade ${index}:`, quantidade.value);
+        });
     });
   </script>
 
   <style>
-
     /* Inputs, selects e textarea com largura consistente */
     .form-container select, 
     .form-container input, 

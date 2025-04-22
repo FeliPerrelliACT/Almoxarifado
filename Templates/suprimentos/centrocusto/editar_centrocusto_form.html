@@ -1,22 +1,85 @@
 {% extends '_layout1.html' %}
 
-{% block content %}
-    <div class="container" style="max-width: 600px; margin-top: 22.5vh; margin-bottom: 22.5vh;">
-        <div class="card shadow-lg border-light rounded">
-            <div class="card-header text-white" style="background-color: #D6891F;">
-                <h5 class="card-title">{{ form_title }}</h5>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{% url 'editar_plano_financeiro' plano.id %}">
-                    {% csrf_token %}
+{% block head_title %}
+    Editar Centro de Custo
+{% endblock %}
 
-                    <div class="mb-3">
-                        <label for="name">Nome do Plano financeiro</label>
-                        <input type="text" name="name" id="name" class="form-control" value="{{ plano.name }}" required>
+{% block content %}
+    <div class="container mt-5 d-flex justify-content-center">
+        <div class="card p-4 shadow-sm" style="width: 500px; position: relative;">
+            <div class="card-header bg-primary text-white text-center" style="width: 100%; position: absolute; top: 0; left: 0; border-top-left-radius: 0; border-top-right-radius: 0;">
+                <h5 class="card-title m-0 py-2">Editar Centro de Custo</h5>
+            </div>
+            <div class="card-body" style="margin-top: 60px;">
+                <form method="POST" action="{% url 'editar_centro_custo' centrocusto.id %}">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="final-buttons-container">
+                        <button type="button" class="form-button cancelar-button" onclick="window.location.href='{% url 'listar_centros_custo' %}'">Cancelar</button>
+                        <button type="submit" class="form-button submit-button">Salvar</button>
                     </div>
-                    <button type="submit" class="btn btn-warning mt-2">Salvar</button>
                 </form>
             </div>
         </div>
     </div>
+
+    <style>
+        .card-header {
+            font-size: 18px;
+            font-weight: bold;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            text-align: center;
+            background-color: #36475F;
+            color: white;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+
+        .card-body {
+            margin-top: 60px; /* Espaço para o header fixo */
+        }
+
+        input {
+            width: 87%;
+            padding: 5px;
+            margin-bottom: 20px; /* Espaço entre o input e os botões */
+        }
+
+        .final-buttons-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .form-button {
+            width: 48%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .submit-button {
+            background: #f89c1c;
+            color: white;
+            border: none;
+        }
+
+        .submit-button:hover {
+            background: #e08916;
+        }
+
+        .cancelar-button {
+            background: #d9534f;
+            color: white;
+            border: none;
+        }
+
+        .cancelar-button:hover {
+            background: #c9302c;
+        }
+    </style>
 {% endblock %}

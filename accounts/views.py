@@ -1,13 +1,14 @@
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.views import LoginView
 from django.contrib.auth import get_user_model
 from accounts.forms import accountsignupForm
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.urls import reverse_lazy
-from django.shortcuts import render
 from django.contrib import messages
 
 User = get_user_model()
@@ -36,4 +37,23 @@ class AccountUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     def get_queryset(self):
         return User.objects.filter(id=self.request.user.id)
 
+class CustomLoginView(LoginView):
+    template_name = 'registration/login.html'
 
+    def form_invalid(self, form):
+        messages.error(self.request, 'Usuário ou senha incorretos.')
+        return super().form_invalid(form)
+
+def remover_imagem(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    
+    # Verifica se o usuário tem uma imagem associada
+    if user.imagem:
+        user.imagem.delete()  # Remove a imagem do sistema de arquivos
+        user.imagem = None  # Remove a referência no banco de dados
+        user.save()
+        messages.success(request, "Imagem de perfil removida com sucesso!")
+    else:
+        messages.error(request, "Nenhuma imagem para remover.")
+    
+    return redirect('editar_perfil')  # Redireciona para a página de edição de perfil

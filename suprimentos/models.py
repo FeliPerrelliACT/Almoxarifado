@@ -7,27 +7,29 @@ from django.db import models
 from django import forms
 import os
 
-# Modelo de Produtos
 class Product(models.Model):
-    USO_UNICO = 'unico'
-    REUTILIZAVEL = 'reutilizavel'
+    FERRAMENTA = 'ferramenta'
+    EPI = 'epi'
+    MATERIAL = 'material'
     
-    TIPO_CHOICES = [
-        (USO_UNICO, 'Uso Único'),
-        (REUTILIZAVEL, 'Reutilizável'),
+    CATEGORIA_CHOICES = [
+        (FERRAMENTA, 'Ferramenta'),
+        (EPI, 'EPI'),
+        (MATERIAL, 'Material'),
     ]
 
     product_name = models.CharField(max_length=100)
     unidade_medida = models.CharField(max_length=50)
     status = models.BooleanField(default=True)
-    tipo = models.CharField(
+    categoria = models.CharField(
         max_length=20,
-        choices=TIPO_CHOICES,
-        default=USO_UNICO
+        choices=CATEGORIA_CHOICES,
+        default=FERRAMENTA  # Define o valor padrão, você pode escolher outro se preferir
     )
 
     def __str__(self):
         return self.product_name  # Apenas o nome do produto
+
 
 # Modelo de Solicitação (Request)
 class Request(models.Model):
@@ -108,6 +110,7 @@ class CentroCusto(models.Model):
     status = models.BooleanField(default=True)
     usuario_registrante = models.ForeignKey(User, on_delete=models.CASCADE)
     data_cadastro = models.DateTimeField(auto_now_add=True)
+    data_inativacao = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -125,11 +128,11 @@ class Funcionario(models.Model):
     usuario_registrante = models.ForeignKey(User, on_delete=models.CASCADE)
     id_funcionario = models.CharField(max_length=50, unique=True)
     data_cadastro = models.DateTimeField(auto_now_add=True)
-    cpf = models.CharField(max_length=14, unique=True)
+    data_inativacao = models.DateTimeField(null=True, blank=True)
     status = models.BooleanField(default=True)
     empresa = models.CharField(max_length=100)
     cargo = models.CharField(max_length=100)
-    name = models.CharField(max_length=100)
+    nome_completo = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name

@@ -12,10 +12,39 @@ UNIT_CHOICES = [
     ('un', 'Unidade'), ('dez', 'Dezena'), ('cen', 'Centena'), ('mil', 'Milhar'),
 ]
 
-TIPO_CHOICES = [
-    ('unico', 'Uso Único'),
-    ('reutilizavel', 'Reutilizável'),
+# Definindo as novas opções para categoria
+CATEGORIA_CHOICES = [
+    ('ferramenta', 'Ferramenta'),
+    ('epi', 'EPI'),
+    ('material', 'Material'),
 ]
+
+# Formulário de Cadastro Produtos
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['product_name', 'unidade_medida', 'categoria']  # Alterando tipo para categoria
+        widgets = {
+            'product_name': forms.TextInput(attrs={'placeholder': 'Nome do produto', 'class': 'form-control'}),
+            'unidade_medida': forms.Select(choices=UNIT_CHOICES, attrs={'class': 'form-control'}),
+            'categoria': forms.Select(choices=CATEGORIA_CHOICES, attrs={'class': 'form-control'}),  # Alterando tipo para categoria
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        unidade_medida = cleaned_data.get('unidade_medida')
+        categoria = cleaned_data.get('categoria')  # Alterando tipo para categoria
+
+        # Garantir que a unidade de medida seja válida
+        if unidade_medida not in dict(UNIT_CHOICES):
+            self.add_error('unidade_medida', "Unidade de medida inválida.")
+
+        # Garantir que a categoria seja válida
+        if categoria not in dict(CATEGORIA_CHOICES):
+            self.add_error('categoria', "Categoria de produto inválida.")  # Alterando tipo para categoria
+
+        return cleaned_data
+
 
 # Formulário de Solicitação
 class RequestForm(forms.ModelForm):
@@ -93,32 +122,6 @@ class RequestProductForm(forms.ModelForm):
             raise forms.ValidationError("A quantidade deve ser maior que zero.")
         return quantity
 
-# Formulário de Cadadastro Produtos
-class ProductForm(forms.ModelForm):
-    class Meta:
-        model = Product
-        fields = ['product_name', 'unidade_medida', 'tipo']
-        widgets = {
-            'product_name': forms.TextInput(attrs={'placeholder': 'Nome do produto', 'class': 'form-control'}),
-            'unidade_medida': forms.Select(choices=UNIT_CHOICES, attrs={'class': 'form-control'}),
-            'tipo': forms.Select(choices=TIPO_CHOICES, attrs={'class': 'form-control'}),
-        }
-
-    def clean(self):
-        cleaned_data = super().clean()
-        unidade_medida = cleaned_data.get('unidade_medida')
-        tipo = cleaned_data.get('tipo')
-
-        # Garantir que a unidade de medida seja válida
-        if unidade_medida not in dict(UNIT_CHOICES):
-            self.add_error('unidade_medida', "Unidade de medida inválida.")
-
-        # Garantir que o tipo seja válido
-        if tipo not in dict(TIPO_CHOICES):
-            self.add_error('tipo', "Tipo de produto inválido.")
-
-        return cleaned_data
-
 # Formulário de Cotação
 class QuotationForm(forms.Form):
     quotation_file = forms.FileField(label='Selecione o arquivo de cotação', required=True)
@@ -186,7 +189,7 @@ class FuncionarioForm(forms.ModelForm):
 
     class Meta:
         model = Funcionario
-        fields = ['name', 'cpf', 'id_funcionario', 'cargo', 'empresa']  # Removido o campo 'status'
+        fields = ['nome_completo', 'id_funcionario', 'cargo', 'empresa']
 
     def save(self, commit=True):
         instance = super().save(commit=False)

@@ -1,13 +1,129 @@
 {% extends '_layout1.html' %}
 
+{% block head_title %}
+  Cadastro de Centro de Custo
+{% endblock %}
+
 {% block content %}
+  <div class="container">
+    <!-- Faixa superior com título -->
+    <div class="title-header">
+      <h2 class="header-title">Cadastro de Centro de Custo</h2>
+    </div>
 
-    <h2>Cadastrar Centro de Custo</h2>
+    <form method="POST" action="{% url 'cadastrar_centro_custo' %}" class="form-container">
+      {% csrf_token %}
 
-    <form method="post">
-        {% csrf_token %}
+      <!-- Renderiza os campos do formulário Django -->
+      <div class="form-group">
         {{ form.as_p }}
-        <button type="submit">Salvar</button>
+      </div>
+
+      <div class="final-buttons-container">
+        <button type="button" class="form-button cancelar-button" onclick="window.location.href='{% url 'listar_centros_custo' %}'">Cancelar</button>
+        <button type="submit" class="form-button submit-button">Salvar</button>
+      </div>
     </form>
-    
+  </div>
+
+  <style>
+    /* Faixa superior para o título */
+    .title-header {
+      background-color: #36475F;
+      width: 100%;
+      padding: 10px 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      text-align: center;
+      border-radius: 5px 5px 0 0;
+    }
+
+    .form-container {
+        margin-top: 20px;
+    }
+
+    p {
+        width: 100%;
+    }
+
+    .header-title {
+      color: white;
+      font-weight: bold;
+      font-size: 24px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: white;
+      padding: 50px 20px 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      position: relative;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start; /* Alinha as labels à esquerda */
+      margin-bottom: 20px;
+      width: 100%;
+    }
+
+    .form-group label {
+      margin-bottom: 5px;
+      font-weight: bold;
+      text-align: left; /* Alinha o texto do label à esquerda */
+      width: 100%;
+    }
+
+    .form-container input, 
+    .form-container select, 
+    .form-container textarea {
+      width: 100%; /* Ocupa toda a largura do container */
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      display: block;
+      box-sizing: border-box;
+    }
+
+    /* Estilos adicionados */
+    .final-buttons-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .form-button {
+      width: 48%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .submit-button {
+      background: #f89c1c;
+      color: white;
+      border: none;
+    }
+
+    .submit-button:hover {
+      background: #e08916;
+    }
+
+    .cancelar-button {
+      background: #d9534f;
+      color: white;
+      border: none;
+    }
+
+    .cancelar-button:hover {
+      background: #c9302c;
+    }
+  </style>
 {% endblock %}

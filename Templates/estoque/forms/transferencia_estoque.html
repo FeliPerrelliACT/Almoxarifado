@@ -27,7 +27,7 @@
       <select name="local_entrada" id="local_entrada" class="form-control" required>
         <option value="">Selecione...</option>
         {% for local in locais_entrada %}
-          <option value="{{ local }}">{{ local }}</option>
+            <option value="{{ local }}">{{ local }}</option>
         {% endfor %}
       </select>
 
@@ -37,7 +37,7 @@
         <select name="responsavel" id="responsavel" class="form-control" required>
           <option value="">Selecione...</option>
           {% for funcionario in funcionarios %}
-            <option value="{{ funcionario.id }}">{{ funcionario.name }}</option>
+            <option value="{{ funcionario.id }}">{{ funcionario.nome_completo }}</option>
           {% endfor %}
         </select>
       </div>

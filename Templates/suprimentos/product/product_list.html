@@ -40,7 +40,7 @@
                                 <option value="">Ordenar por</option>
                                 <option value="product_name" {% if request.GET.order_by == 'product_name' %}selected{% endif %}>Nome do Produto</option>
                                 <option value="unidade_medida" {% if request.GET.order_by == 'unidade_medida' %}selected{% endif %}>Unidade de Medida</option>
-                                <option value="tipo" {% if request.GET.order_by == 'tipo' %}selected{% endif %}>Tipo</option>
+                                <option value="categoria" {% if request.GET.order_by == 'categoria' %}selected{% endif %}>Tipo</option>
                             </select>
                         </div>
                         <div class="me-3">
@@ -68,7 +68,7 @@
                         <tr>
                             <td>{{ product.product_name }}</td>
                             <td>{{ product.unidade_medida }}</td>
-                            <td>{% if product.tipo == 'unico' %}Uso único{% else %}Reutilizável{% endif %}</td>
+                            <td>{{ product.categoria }}</td>
                             <td>
                                 {% if product.status %}
                                     <span class="badge bg-success">Ativo</span>

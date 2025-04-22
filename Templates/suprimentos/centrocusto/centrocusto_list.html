@@ -59,12 +59,19 @@
                             <td>{{ centro.id }}</td>
                             <td>{{ centro.name }}</td>
                             <td>
+                                {% if centro.data_inativacao %}
+                                    {{ centro.data_inativacao }}
+                                {% else %}
+                                    &nbsp;
+                                {% endif %}
+                            </td>  
+                            <td>
                                 {% if centro.status %}
                                     <span class="badge bg-success">Ativo</span>
                                 {% else %}
                                     <span class="badge bg-danger">Inativo</span>
                                 {% endif %}
-                            </td>
+                            </td>                          
                             <td>
                                 <a href="{% url 'editar_centro_custo' centro.id %}" class="btn btn-warning btn-sm">Editar</a>
                                 <a href="{% url 'toggle_centro_custo_status' centro.id %}" class="btn btn-secondary btn-sm">
