@@ -12,7 +12,6 @@ CSRF_TRUSTED_ORIGINS = [
     'https://almoxerifado.onrender.com',
 ]
 
-# settings.py
 ALLOWED_HOSTS = ['almoxerifado.onrender.com', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
@@ -43,7 +42,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(BASE_DIR, 'Templates'),  # Verifique se o caminho está correto
+            os.path.join(BASE_DIR, 'templates'),  # Corrigido para 'templates' com 't' minúsculo
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -103,12 +102,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
 
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGOUT_REDIRECT_URL = '/accounts/login'
 LOGIN_URL = '/accounts/login'
 LOGIN_REDIRECT_URL = '/'
-
 
 MESSAGE_TAGS = {
     messages.DEBUG: 'secondary',
@@ -116,7 +113,6 @@ MESSAGE_TAGS = {
     messages.SUCCESS: 'success',
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
-
 }
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
