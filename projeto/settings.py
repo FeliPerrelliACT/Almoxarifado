@@ -12,7 +12,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://almoxerifado.onrender.com',
 ]
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['https://almoxerifado.onrender.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -41,7 +41,9 @@ ROOT_URLCONF = 'projeto.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),  # Verifique se o caminho está correto
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
