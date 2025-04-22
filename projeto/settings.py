@@ -9,7 +9,7 @@ SECRET_KEY = 'django-insecure-psfjm1^5@(u7z5%!4sc+kpg^&2$8o0i1(_!)&t)wgb1%3*gd=f
 DEBUG = True
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://trusting-trusted-kit.ngrok-free.app',
+    'https://almoxerifado.onrender.com',
 ]
 
 ALLOWED_HOSTS = ['*']
