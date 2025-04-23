@@ -38,11 +38,11 @@ class AccountUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         return User.objects.filter(id=self.request.user.id)
 
 class CustomLoginView(LoginView):
-    template_name = 'registration/login.html'
+    template_name = 'login.html'
 
     def form_invalid(self, form):
-        messages.error(self.request, 'Usuário ou senha incorretos.')
-        return super().form_invalid(form)
+        messages.error(self.request, "Usuario ou senha inválidos.")
+        return self.render_to_response(self.get_context_data(form=form))
 
 def remover_imagem(request, user_id):
     user = get_object_or_404(User, id=user_id)

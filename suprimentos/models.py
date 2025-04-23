@@ -135,7 +135,7 @@ class Funcionario(models.Model):
     nome_completo = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.name
+        return self.nome_completo
 
 class Armazem(models.Model):
     name = models.CharField(max_length=100)

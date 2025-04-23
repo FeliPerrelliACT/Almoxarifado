@@ -18,10 +18,18 @@ import pandas as pd
 @login_required
 def entrada_estoque(request):
     if request.method == 'POST':
+        tipo_entrada = request.POST.get('tipo_entrada')  # Captura o tipo de entrada
         form = EntradaEstoqueForm(request.POST)
+        
         if form.is_valid():
             local = form.cleaned_data['local']
             usuario = request.user  # Captura o usuário autenticado
+
+            funcionario = None
+            if tipo_entrada == 'DEVOLUCAO':  # Só preenche o funcionário se for devolução
+                funcionario_id = request.POST.get('funcionario')
+                if funcionario_id:
+                    funcionario = Funcionario.objects.get(id=funcionario_id)
 
             for i in range(len(request.POST.getlist('produto'))):
                 produto_id = request.POST.getlist('produto')[i]
@@ -40,7 +48,9 @@ def entrada_estoque(request):
                     product=produto,
                     local=local,
                     quantidade=quantidade,
-                    usuario_registrante=usuario  # Salva quem registrou
+                    usuario_registrante=usuario,
+                    tipo_entrada=tipo_entrada,
+                    funcionario=funcionario if tipo_entrada == 'DEVOLUCAO' else None  # Preenche o funcionário apenas para devoluções
                 )
 
             return redirect('lista_estoque')
@@ -50,10 +60,14 @@ def entrada_estoque(request):
 
     # Buscar apenas os nomes dos armazéns
     locais_entrada = Armazem.objects.filter(status=1).values_list('name', flat=True)
+    
+    # Buscar apenas os funcionários ativos (status=True)
+    funcionarios = Funcionario.objects.filter(status=True)
 
     return render(request, 'estoque/forms/entrada_estoque.html', {
         'form': form,
-        'locais_entrada': locais_entrada  # Passa os locais de entrada para o template
+        'locais_entrada': locais_entrada,
+        'funcionarios': funcionarios  # Passa a lista de funcionários ativos para o template
     })
 
 @login_required

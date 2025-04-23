@@ -6,33 +6,52 @@
 
 {% block content %}
   <div class="container">
-    <!-- Faixa superior com cor e texto -->
     <div class="title-header">
       <h2 class="header-title">Entrada de Estoque</h2>
     </div>
 
     <form method="POST" enctype="multipart/form-data" class="form-container">
       {% csrf_token %}
+      
+      <!-- Local de Entrada -->
       <label for="local" class="mt-1">Local de Entrada:</label>
       <select name="local" id="local" required>
-          <option value="">Selecione...</option>
-          {% for local in locais_entrada %}
-              <option value="{{ local }}">{{ local }}</option>
-          {% endfor %}
+        <option value="">Selecione...</option>
+        {% for local in locais_entrada %}
+          <option value="{{ local }}">{{ local }}</option>
+        {% endfor %}
       </select>
 
+      <!-- Tipo de Entrada -->
+      <label for="tipo_entrada" class="mt-1">Tipo de Entrada:</label>
+      <select name="tipo_entrada" id="tipo_entrada" required>
+        <option value="COMPRA">Compra</option>
+        <option value="DEVOLUCAO">Devolução</option>
+      </select>
+
+      <!-- Campo de Funcionário (visível apenas se DEVOLUCAO) -->
+      <div id="funcionario-container" style="display: none;">
+        <label for="funcionario" class="mt-1">Funcionário:</label>
+        <select name="funcionario" id="funcionario">
+          <option value="">Selecione...</option>
+          {% for funcionario in funcionarios %}
+            <option value="{{ funcionario.id }}">{{ funcionario.nome_completo }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Produtos -->
       <div id="produto-container">
         <div class="produto-item">
-          <label for="produto" class="mb-2">Produto:</label>
-          <select name="produto" required id="produto-select">
+          <label class="mb-2">Produto:</label>
+          <select name="produto" required>
             <option value="" disabled selected>Selecione...</option>
             {% for produto in form.fields.produto.queryset %}
               <option value="{{ produto.id }}">{{ produto.product_name }}</option>
             {% endfor %}
           </select>
-          
 
-          <label for="quantidade" class="mb-2">Quantidade:</label>
+          <label class="mb-2">Quantidade:</label>
           <input type="number" name="quantidade" min="1" required>
 
           <button type="button" class="remove-produto mb-2">Remover</button>
@@ -52,21 +71,35 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-        document.getElementById("add-produto").addEventListener("click", function () {
-            let container = document.getElementById("produto-container");
-            let novoProduto = container.firstElementChild.cloneNode(true);
-            novoProduto.querySelector("input[name='quantidade']").value = "";
-            container.appendChild(novoProduto);
-        });
+      const tipoEntradaSelect = document.getElementById("tipo_entrada");
+      const funcionarioContainer = document.getElementById("funcionario-container");
 
-        document.getElementById("produto-container").addEventListener("click", function (event) {
-            if (event.target.classList.contains("remove-produto")) {
-                let produtoItens = document.querySelectorAll(".produto-item");
-                if (produtoItens.length > 1) {
-                    event.target.parentElement.remove();
-                }
-            }
-        });
+      tipoEntradaSelect.addEventListener("change", function () {
+        funcionarioContainer.style.display = (this.value === "DEVOLUCAO") ? "block" : "none";
+      });
+
+      tipoEntradaSelect.dispatchEvent(new Event("change"));
+
+      const container = document.getElementById("produto-container");
+
+      document.getElementById("add-produto").addEventListener("click", function () {
+        const template = container.querySelector(".produto-item");
+        const clone = template.cloneNode(true);
+
+        clone.querySelector("select[name='produto']").selectedIndex = 0;
+        clone.querySelector("input[name='quantidade']").value = "";
+
+        container.appendChild(clone);
+      });
+
+      container.addEventListener("click", function (event) {
+        if (event.target.classList.contains("remove-produto")) {
+          const itens = container.querySelectorAll(".produto-item");
+          if (itens.length > 1) {
+            event.target.closest(".produto-item").remove();
+          }
+        }
+      });
     });
   </script>
 

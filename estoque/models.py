@@ -16,14 +16,28 @@ class Estoque(models.Model):
 
 # Modelo de log de entradas no estoque
 class EntradaEstoque(models.Model):
+    TIPO_ENTRADA_CHOICES = [
+        ('COMPRA', 'Compra'),
+        ('DEVOLUCAO', 'Devolução'),
+    ]
+
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     local = models.CharField(max_length=255)
-    quantidade = models.PositiveIntegerField()  # Aceitando apenas números positivos
-    data_entrada = models.DateTimeField(auto_now_add=True)  # Data da entrada
+    quantidade = models.PositiveIntegerField()
+    data_entrada = models.DateTimeField(auto_now_add=True)
     usuario_registrante = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    tipo_entrada = models.CharField(
+        max_length=10,
+        choices=TIPO_ENTRADA_CHOICES
+    )
+    funcionario = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
-        return f"Entrada: {self.product.product_name} - {self.quantidade}"
+        return f"Entrada: {self.product.product_name} - {self.quantidade} ({self.tipo_entrada})"
 
 # Modelo de log de saidas no estoque
 class SaidaEstoque(models.Model):

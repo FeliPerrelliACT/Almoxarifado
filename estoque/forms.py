@@ -1,4 +1,4 @@
-from .models import SaidaEstoque, TransferenciaEstoque 
+from .models import EntradaEstoque, SaidaEstoque, TransferenciaEstoque 
 from suprimentos.models import Product, Funcionario, CentroCusto
 from django import forms
 
@@ -9,6 +9,27 @@ class EntradaEstoqueForm(forms.Form):
         label="Produto"
     )
     quantidade = forms.IntegerField(label="Quantidade", min_value=1)
+
+    tipo_entrada = forms.ChoiceField(
+        label="Tipo de Entrada",
+        choices=EntradaEstoque.TIPO_ENTRADA_CHOICES
+    )
+
+    funcionario = forms.CharField(
+        label="Funcionário (se devolução)",
+        max_length=255,
+        required=False
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo_entrada = cleaned_data.get('tipo_entrada')
+        funcionario = cleaned_data.get('funcionario')
+
+        if tipo_entrada == 'DEVOLUCAO' and not funcionario:
+            self.add_error('funcionario', 'Este campo é obrigatório em caso de devolução.')
+        elif tipo_entrada == 'COMPRA' and funcionario:
+            self.add_error('funcionario', 'Não deve ser preenchido em caso de compra.')
 
 class SaidaEstoqueForm(forms.Form):
     local = forms.CharField(label="Local", max_length=255)
