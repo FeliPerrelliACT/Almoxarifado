@@ -9,7 +9,7 @@ SECRET_KEY = 'django-insecure-psfjm1^5@(u7z5%!4sc+kpg^&2$8o0i1(_!)&t)wgb1%3*gd=f
 DEBUG = True
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://almoxerifado.onrender.com',
+    'https://almoxarifado-act.onrender.com',
 ]
 
 ALLOWED_HOSTS = ['almoxerifado.onrender.com', 'localhost', '127.0.0.1']
@@ -42,7 +42,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(BASE_DIR, 'templates'),  # Corrigido para 'templates' com 't' minúsculo
+            os.path.join(BASE_DIR, 'templates'),
         ],
         'APP_DIRS': True,
         'OPTIONS': {
