@@ -59,28 +59,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'projeto.wsgi.application'
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'sig_pzgt',
-#         'USER': 'root',
-#         'PASSWORD': '5LzH7l5gGDOBxSTt9aUpOlwWpYErNzZM',
-#         'HOST': 'dpg-d03u09ngi27c738d997g-a.oregon-postgres.render.com',
-#         'PORT': '5432',
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'sig',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'sig_pzgt',
         'USER': 'root',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',  # ou o endereço do seu servidor MySQL
-        'PORT': '3306',       # porta padrão do MySQL
+        'PASSWORD': '5LzH7l5gGDOBxSTt9aUpOlwWpYErNzZM',
+        'HOST': 'dpg-d03u09ngi27c738d997g-a.oregon-postgres.render.com',
+        'PORT': '5432',
     }
 }
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
