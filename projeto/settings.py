@@ -12,7 +12,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://almoxarifado-act.onrender.com',
 ]
 
-ALLOWED_HOSTS = ['almoxerifado.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['almoxarifado-act.onrender.com', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
